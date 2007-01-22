@@ -1,12 +1,14 @@
-#summary File Format
+﻿#summary File Format
 
 = Introduction =
 
 PUZ is a file format commonly used by commercial software for crossword puzzles. There is, to our knowledge, no documentation of the format available online.  This page (and the implementations) is the result of a bit of reverse engineering work.
 
-As it currently stands, the documentation is far from complete. However, it is complete enough to read and write basic crossword puzzles in the format, such that you may interoperate with the common crossword applications. I have no real financial interest in this, it was just a fun hack and allows me to produce crossword puzzles for friends to play.
+As it currently stands, the documentation is not from complete and doesn't support some files. However, it is complete enough to read and write basic crossword puzzles in the format, such that you may interoperate with the common crossword applications.
 
-= File Overview =
+We have no real financial interest in this; it was just a fun hack.
+
+= File Contents =
 The file is laid out like this:
   # a fixed-size header with information like the width and height of the puzzle
   # the puzzle solution and the current state of the cells, with size determined by the puzzle dimensions described in the previous section
@@ -19,9 +21,10 @@ Define all _short_s to be a little-endian two byte integer.  The file header is 
 || Checksum || 0x00 || 0x01 || 0x2 || short || overall file checksum ||
 || File Magic || 0x02 || 0x0D || 0xC || string || NUL-terminated constant string: 4143 524f 5353 2644 4f57 4e00 ("ACROSS&DOWN") ||
 
-The following checksums are described in more detail later.
+The following checksums are described in more detail in a separate section
+below.
 || Component || Offset || End || Length || Type || Description ||
-|| CIB Checksum || 0x0E || 0x0F || 0x2 || short || checksum of the puzzle's CIB ||
+|| CIB Checksum || 0x0E || 0x0F || 0x2 || short || (defined later) ||
 || Masked Low Checksums || 0x10 || 0x13 || 0x4 || || A set of checksums, XOR-masked against a magic string. ||
 || Masked High Checksums || 0x14 || 0x17 || 0x4 || || A set of checksums, XOR-masked against a magic string. ||
 
@@ -30,10 +33,6 @@ The following checksums are described in more detail later.
 || Reserved1C(?) || 0x1C || 0x1D || 0x2 || ? || In many files, this is uninitialized memory ||
 || Unknown || 0x1E || 0x1F || 0x2 || ? || In all files, this is set to 0x0000(?) ||
 || Reserved20(?) || 0x20 || 0x2B || 0xB || ? || In files where Reserved1C is garbage, this is garbage too. ||
-
-The BIC (Board Initialization Checksum) region covers some of the following entries.  These contain the vitals of the puzzle, and are used to initialize the overall checksum of the file.
-
-|| Component || Offset || End || Length || Type || Description ||
 || Width || 0x2C || 0x2C || 0x1 || byte || The width of the board ||
 || Height || 0x2D || 0x2D || 0x1 || byte || The height of the board ||
 || # of Clues || 0x2E || 0x2F || 0x2 || short || The number of clues for this board ||
@@ -71,7 +70,7 @@ These first three example strings would appear in the file as:
 
 The "Across" clues come before the "Down" clues.
 
-== Clue Assignment ==
+= Clue Assignment =
 Nowhere in the file does it specify which cells get numbers or which clues correspond to which numbers.  These are instead derived from the shape of the puzzle.
 
 Here's a sketch of one way to assign numbers and clues to cells.  First, some helper functions:
@@ -115,4 +114,82 @@ for y in 0..height:
       cell_number += 1
 }}}
 
-With the above computation completed, you can then compute how many across clues and down clues must be in the file.
+= Checksums =
+The file format uses a variety of checksums.
+
+The checksumming routine used in PUZ is a variant of CRC-16. To checksum a region of memory, the following is used:
+
+{{{
+unsigned short cksum_region(unsigned char *base, int len,
+                            unsigned short cksum) {
+  int i;
+
+  for (i = 0; i < len; i++) {
+    if (cksum & 0x0001)
+      cksum = (cksum >> 1) + 0x8000;
+    else
+      cksum = cksum >> 1;
+    cksum += *(base+i);
+  }
+                    
+  return cksum;
+}
+}}}
+
+The CIB checksum (which appears as its own field in the header as well as
+elsewhere) is a checksum over eight bytes of the header starting at the board
+width:
+{{{
+c_cib = cksum_region(data + 0x2C, 8, 0);
+}}}
+
+The primary board checksum uses the CIB checksum and other data:
+{{
+cksum = c_cib;
+cksum = cksum_region(solution, w*h, cksum);
+cksum = cksum_region(grid, w*h, cksum);
+cksum = cksum_region(title, strlen(title)+1, cksum);
+cksum = cksum_region(author, strlen(author)+1, cksum);
+cksum = cksum_region(copyright, strlen(copyright)+1, cksum);
+
+for(i = 0; i < num_of_clues; i++)
+  cksum = cksum_region(clue[i], strlen(clue[i]), cksum);
+}}}
+
+== Masked Checksums ==
+The values from 0x10-0x17 are a real pain to generate. They are the result of masking off and XORing four checksums; 0x10-0x13 are the low bytes, while 0x14-0x17 are the high bytes.
+
+To calculate these bytes, we must first calculate four checksums:
+
+  # CIB Checksum:
+    `c_cib = cksum_region(CIB, 0x08, 0x0000);`
+  # Solution Checksum:
+    `c_sol = cksum_region(solution, w*h, 0x0000);`
+  # Grid Checksum:
+    `c_grid = cksum_region(grid, w*h, 0x0000);`
+  # A partial board checksum:
+    {{{
+    c_part = cksum_region(title, strlen(title)+1, 0x0000);
+    c_part = cksum_region(author, strlen(author)+1, c_part);
+    c_part = cksum_region(copyright, strlen(copyright)+1, c_part);
+    for (int i = 0; i < n_clues; i++)
+      c_part = cksum_region(clue[i], strlen(clue[i]), c_part);
+    }}}
+
+Once these four checksums are obtained, they're stuffed into the file thusly:
+
+{{{
+file[0x10] = 0x49 ^ (c_cib & 0xFF);
+file[0x11] = 0x43 ^ (c_sol & 0xFF);
+file[0x12] = 0x48 ^ (c_grid & 0xFF);
+file[0x13] = 0x45 ^ (c_part & 0xFF);
+
+file[0x14] = 0x41 ^ ((c_cib & 0xFF00) >> 8);
+file[0x15] = 0x54 ^ ((c_sol & 0xFF00) >> 8);
+file[0x16] = 0x45 ^ ((c_grid & 0xFF00) >> 8);
+file[0x17] = 0x44 ^ ((c_part & 0xFF00) >> 8);
+}}}
+
+= Credit =
+Most of this document is by [http://joshisanerd.com Josh Myer], with some
+work also done by [http://neugierig.org Evan Martin].
