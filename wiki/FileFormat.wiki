@@ -15,7 +15,7 @@ The file is laid out like this:
   # a series of NUL-terminated variable-length strings with information like the author, copyright, and the puzzle clues
 
 == Header Format ==
-Define all _short_s to be a little-endian two byte integer.  The file header is then described in the following table.
+Define a _short_ to be a little-endian two byte integer.  The file header is then described in the following table.
 
 || Component || Offset || End || Length || Type || Description ||
 || Checksum || 0x00 || 0x01 || 0x2 || short || overall file checksum ||
