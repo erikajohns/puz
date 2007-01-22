@@ -49,9 +49,15 @@ C A T
 # # R
 }}}
 
-At the end of the header (offset 0x34) comes the solution to the puzzle.  Non-playable (ie: black) cells are denoted by '.'.  So for this example, the board is stored as nine bytes: "CAT..A..R".
+At the end of the header (offset 0x34) comes the solution to the puzzle.  Non-playable (ie: black) cells are denoted by '.'.  So for this example, the board is stored as nine bytes:
+{{{
+CAT..A..R
+}}}
 
-Next comes the player state, stored similarly.  Empty cells are stored as '-', so the example board before any cells had been filled in is stored as: "---..#..#".
+Next comes the player state, stored similarly.  Empty cells are stored as '-', so the example board before any cells had been filled in is stored as: 
+{{{
+---..-..-"
+}}}
 
 == Strings Section ==
 Immediately following the boards comes the strings.  All strings are encoded in ISO-8859-1 and end with a NUL.  Even if a string is empty, its trailing NUL still appears in the file.  In order, the strings are:
