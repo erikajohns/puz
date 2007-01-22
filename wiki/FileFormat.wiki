@@ -67,12 +67,14 @@ Immediately following the boards comes the strings.  All strings are encoded in 
 || Author || J. Puz / W. Shortz ||
 || Copyright || (c) 2007 J. Puz ||
 || Clue#1 || Cued, in pool ||
-|| ... || [more clues] ||
+|| ... || ...more clues... ||
 || Clue#n || Quiet ||
 || Notes || http://mywebsite ||
 
-These first three example strings would appear in the file as:
-  "Theme: .PUZ format\0J. Puz / W. Shortz\0(c) 2007 J. Puz\0"
+These first three example strings would appear in the file as the following, where \0 represents a NUL:
+{{{
+Theme: .PUZ format\0J. Puz / W. Shortz\0(c) 2007 J. Puz\0
+}}}
 
 The "Across" clues come before the "Down" clues.
 
