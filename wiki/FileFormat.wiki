@@ -56,7 +56,7 @@ CAT..A..R
 
 Next comes the player state, stored similarly.  Empty cells are stored as '-', so the example board before any cells had been filled in is stored as: 
 {{{
----..-..-"
+---..-..-
 }}}
 
 == Strings Section ==
