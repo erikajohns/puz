@@ -1,0 +1,9 @@
+# DHTML Crossword Server
+# Copyright (C) 2007 Evan Martin <martine@danga.com>
+
+Requirements:
+  gem install mongrel
+  gem install json
+
+Usage:
+  ./server --help

@@ -1,0 +1,16 @@
+== URL structure
+We serve these paths (where a name like <crossword> means a crossword name):
+  /crossword/
+    list of crosswords with links to them
+  /crossword/<crossword>/
+    the dhtml crossword html
+  /crossword/<crossword>/crossword.js
+    the json data for this specific crossword
+  /session/
+    list of running games with links to them
+  /session/<session>/
+    same data served off of /crossword/<crossword>/ but also understands
+    multiplayer requests
+  /session/<session>/state.js
+    multiplayer game state, pulled by networking code
+    
