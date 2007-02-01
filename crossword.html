@@ -1,0 +1,75 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="../../static/crossword.css"/>
+<style type='text/css'>
+body {
+  margin: 2ex 5ex;
+  font-family: serif;
+}
+
+h1 {
+  padding-bottom: 0.5ex
+}
+
+h2 {
+  font-size: 100%;
+  margin: 0;
+}
+</style>
+
+<script src='../../static/trace.js'></script>
+<script src='../../static/crosswordui.js'></script>
+<script src='../../static/cluesui.js'></script>
+<script src='../../static/multiplayer.js'></script>
+<script src='crossword.js'></script>
+<script>//<![CDATA[
+
+function $(id) { return document.getElementById(id); }
+
+function makeCrossword() {
+  $('title').innerHTML = Crossword.title;
+
+  var widget = new CrosswordWidget;
+  $('crossword').appendChild(widget.loadCrossword(Crossword));
+  if (document.location.href.indexOf('/session/') != 0)
+    var mp = new Multiplayer(document.location.href, widget);
+
+  var instructions = document.createElement('p');
+  instructions.innerHTML = "Select position using the mouse and arrow keys.  " +
+    "Enter answers with the keyboard.  " +
+    "Switch direction using the space bar."
+  $('crossword').appendChild(instructions);
+
+  var clues = CluesUI.create(Crossword);
+  $('cluecolumn').appendChild(clues);
+
+  widget.highlightCallback = function(number) {
+    if (widget.direction_horiz) {
+      CluesUI.across.scrollTo(number);
+      CluesUI.down.unhighlight();
+    } else {
+      CluesUI.across.unhighlight();
+      CluesUI.down.scrollTo(number);
+    }
+  };
+}
+
+//]]>
+</script>
+</head>
+
+<body onload='makeCrossword()'>
+
+<h1 id='title'></h1>
+ok
+
+<table width='100%' cellspacing='0' cellpadding='0'><tr valign='top'>
+<td width='0%' id='crossword' width='1%' valign='top'></td>
+<td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td id='cluecolumn'></td>
+</tr></table>
+
+<div id='trace'></div>
+</body>
+</html>
+<!-- vim: set ts=2 sw=2 et : -->

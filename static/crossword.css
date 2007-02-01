@@ -1,0 +1,78 @@
+/*
+Crossword cells are stuck in a big table.  They look like this:
+  td, 1px black border -- crossword cell
+    div, 3ex width/height, relative pos -- holds the cell content
+    div, absolute, small font -- number, if there is one
+The focus just floats around on top:
+  div, absolute, bordered
+*/
+
+#crosswordui {
+  font-family: sans-serif;
+  border-top: solid 1px #333;
+  border-left: solid 1px #333;
+  xposition: relative;
+}
+
+#crosswordui td {
+  position: relative;
+}
+
+#crosswordui td.filled {
+  background: #333;
+}
+#crosswordui td.highlighted {
+  background: #ccf;
+}
+
+#crosswordui td div.number {
+  z-index: 1;
+  position: absolute;
+  /* negative offsets to position over the highlighter. */
+  /*top: -2px;
+  left: -2px;*/
+  font-size: 7pt;
+}
+
+#crosswordui div.letter {
+  z-index: 2;
+  font-family: sans-serif;
+  font-weight: bold;
+  text-align: center;
+  line-height: 3ex;    /* vertical centering! */
+  width:       3ex;
+  height:      3ex;
+  position: relative;
+  border-right: solid 1px #333;
+  border-bottom: solid 1px #333;
+}
+
+#crosswordui .focus {
+  position: absolute;
+  border: solid 3px blue;
+  z-index: 2;
+}
+
+div.crosswordclues {
+  margin-bottom: 1ex;
+  width: 40ex;
+}
+
+div.crosswordclues .scroller {
+  height: 15em;
+  /*border-top:    solid 2px #333;
+  border-left:   solid 2px #333;
+  border-bottom: solid 2px #ccc;
+  border-right:  solid 2px #ccc;*/
+  border: solid 1px #ccc;
+}
+
+div.crosswordclues .highlighted {
+  background: #eef;
+}
+
+div.crosswordclues a {
+  text-decoration: none;
+  color: black;
+}
+

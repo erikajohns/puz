@@ -1,0 +1,328 @@
+#!/usr/bin/ruby
+# DHTML Crossword Server
+# Copyright (C) 2007 Evan Martin <martine@danga.com>
+
+require 'rubygems'
+
+require 'mongrel'
+require 'optparse'
+require 'json'
+
+require '../rubypuz/lib/puz.rb'
+
+# Tell Mongrel that we want full backtraces on errors.
+$mongrel_debug_client = true
+
+# crossword_to_hash: given a RubyPuz Crossword object, convert it into
+# a hash suitable for JSON'ing over to the JS client.
+def crossword_to_hash cw
+  # We pass the clues list as an array instead of a hash because we
+  # want the clues in order.
+  def make_clueslist(clues)
+    clues.keys.sort.map do |num|
+      [num, clues[num]]
+    end
+  end
+  {
+    'title'     => cw.title,
+    'author'    => cw.author,
+    'copyright' => cw.copyright,
+    'width'     => cw.width,
+    'height'    => cw.height,
+    'answer' =>
+      (0...cw.height).map do |y|
+        (0...cw.height).map do |x|
+          square = cw.squares[x][y]
+          square && square.answer ? square.answer : '.'
+        end.join('')
+      end.join(''),
+    'numbers' =>
+      (0...cw.height).map do |y|
+        (0...cw.width).map do |x|
+          square = cw.squares[x][y]
+          square && square.number ? square.number : 0
+        end
+      end,
+    'down'   => make_clueslist(cw.down),
+    'across' => make_clueslist(cw.across)
+  }
+end
+
+def redirect_with_slash(request, response)
+  response.socket.write(Mongrel::Const::REDIRECT %
+                        (request.params['REQUEST_URI'] + '/'))
+end
+
+# CrosswordStore supplies the actual crossword data, allowing enumerating
+# crosswords and fetching a given crossword by name.
+class CrosswordStore
+  attr_reader :crosswords
+
+  def initialize(datapath)
+    refresh(datapath)
+  end
+
+  def refresh(datapath)
+    # All available crosswords, mapping file basename => Puz obj
+    @crosswords = {}
+    # The state of each crossword, filename => CrosswordState object
+    @states = {}
+    load_crosswords datapath
+  end
+
+  # Load all the crosswords found in the datadir path.
+  def load_crosswords(datapath)
+    print "Loading crosswords: "; $stdout.flush
+    Dir["#{datapath}/*.puz"].sort.each do |path|
+      name = File::basename(path, '.puz')
+      print "#{name} "; $stdout.flush
+      load_crossword(name, path)
+    end
+    puts
+  end
+
+  # Load a single crossword into @crosswords hash
+  def load_crossword(name, path)
+    crossword = Crossword.new
+    File::open(path) { |f| crossword.parse(f) }
+    @crosswords[name] = crossword
+    @states[name] = nil
+  end
+
+  def each_in_order
+    cws = @crosswords.to_a.sort_by { |name, crossword| crossword.title }
+    cws.each { |name, crossword| yield name, crossword }
+  end
+
+  def include? cw
+    @crosswords.has_key? cw
+  end
+  def get_crossword cw
+    @crosswords[cw]
+  end
+end
+
+# SessionState holds the state of a crossword in a multiplayer session.
+class SessionState
+  attr_reader :cells, :crossword
+
+  class Cell
+    attr_accessor :letter
+    def initialize
+      @letter = ' '
+    end
+  end
+
+  def initialize(crossword)
+    @crossword = crossword
+    raise "CrosswordState new: nil crossword!" unless crossword
+    @cells = (0...@crossword.width).map do
+      (0...@crossword.height).map do
+        Cell.new
+      end
+    end
+  end
+
+  # Post an event to the play queue, user@sessid playing character c in pos x,y
+  # sessid, x, y, c -> nil
+  def handle_event(sessid, eventid, x, y, c)
+    raise "Unknown eventid" unless eventid == "xy"
+    
+    puts "Whoa!  Empty c! #{sessid}/#{eventid}/#{x}/#{y}/#{c}" unless c && !c.empty?
+    return if x < 0 or x >= @crossword.width or y < 0 or y >= @crossword.height
+    @cells[x][y].letter = c
+  end
+end
+
+class SessionManager
+  attr_reader :sessions
+
+  def initialize
+    @sessions = {}
+    @sessions['test'] ||= SessionState.new($crossword_store.get_crossword('Jan1807'))
+  end
+
+  def get_session sess
+    return @sessions[sess]
+  end
+end
+
+
+# An exception so we can pass 404s around more easily.
+class NotFound < RuntimeError; end
+
+class SessionHandler < Mongrel::HttpHandler
+  def initialize(cwh)
+    @sessmgr = SessionManager.new
+    @crossword_handler = cwh
+  end
+
+  # Process a state update for a specific session.
+  def req_state(request, response, session, body)
+    body.split("\n").each do |line|
+      sessid, event_type, x, y, update = line.split("\t")
+      session.handle_event(sessid, event_type, x.to_i, y.to_i, update)
+    end
+
+    #sleep 1
+
+    response.start do |head, out|
+      head['Content-type'] = 'text/javascript'
+      state = {
+        'letters' =>
+          (0...session.crossword.height).map do |y|
+            (0...session.crossword.width).map do |x|
+              session.cells[x][y].letter
+            end.join('')
+          end.join('')
+      }
+      out.puts state.to_json
+    end
+  end
+
+  # Process a request underneath a specific session's path.
+  def req_session(request, response, session, path)
+    if session.crossword
+      case path
+      when 'state.js'
+        if request.params['REQUEST_METHOD'] != 'POST'
+          response.send_status 400
+          return
+        end
+        query = request.params['QUERY_STRING']
+
+        req_state(request, response, session, request.body.read)
+      else
+        @crossword_handler.req_crossword(request, response,
+                                         session.crossword, path)
+      end
+    else
+      response.start do |head, out|
+        head['Content-type'] = 'text/plain'
+        puts 'XXX game selector goes here'
+      end
+    end
+  end
+
+  # Process a request for the game list.
+  def req_list(request, response)
+    response.start do |head, out|
+      head['Content-type'] = 'text/html'
+      out.puts "<h1>available sessions</h1>"
+      @sessmgr.sessions.keys.sort.each do |sess|
+        out.puts "<a href='#{sess}/'>#{sess}</a><br/>"
+      end
+    end
+  end
+
+  # Process a request at the toplevel /session/... URL.
+  def process(request, response)
+    req_path = request.params['PATH_INFO']
+    session_name, path = req_path.split('/', 2)
+    begin
+      if session_name
+        session = @sessmgr.get_session(session_name)
+        raise NotFound unless session
+        req_session(request, response, session, path)
+      else
+        req_list(request, response)
+      end
+    rescue NotFound
+      puts "404: #{req_path}"
+      response.send_status 404
+    end
+  end
+end
+
+class CrosswordHandler < Mongrel::HttpHandler
+  def req_list(request, response)
+    response.start do |head, out|
+      head['Content-type'] = 'text/html'
+      $crossword_store.each_in_order do |name, crossword|
+        title = crossword.title
+        title = name if title.empty?
+        out.puts("<a href='#{name}/'>#{title}</a><br/>")
+      end
+    end
+  end
+
+  # Process a request for a specific crossword.
+  def req_crossword(request, response, crossword, path)
+    case path
+    when nil
+      redirect_with_slash(request, response)
+    when ''
+      respond_with_file(request, response, 'crossword.html', 'text/html')
+    when 'crossword.js'
+      response.start do |head, out|
+        out.print("var Crossword = " +
+                  crossword_to_hash(crossword).to_json +
+                  ";")
+      end
+    else
+      raise NotFound
+    end
+  end
+
+  # Process a request for /crossword/... URLs.
+  def process(request, response)
+    req_path = request.params['PATH_INFO']
+    begin
+      crossword_name, path = req_path.split('/', 2)
+      if crossword_name
+        crossword = $crossword_store.get_crossword(crossword_name)
+        raise NotFound unless crossword
+        req_crossword(request, response, crossword, path)
+      else
+        req_list(request, response)
+      end
+    rescue NotFound
+      puts "404: #{req_path}"
+      response.send_status 404
+    end
+  end
+
+  def respond_with_file(request, response, filename, ctype)
+    response.start do |head, out|
+      head['Content-type'] = ctype
+      open(filename) { |f| out.write(f.read) }
+    end
+  end
+end
+
+class AddSlashHandler < Mongrel::HttpHandler
+  def process(request, response)
+    redirect_with_slash(request, response)
+  end
+end
+
+def main
+  bind = '0.0.0.0'
+  port = 2000
+  datadir = 'data'
+  opts = OptionParser.new
+  opts.banner = "Usage: #{$0} [options]"
+  opts.on('--data DIR',  'Directory containing .puz files') { |datadir| }
+  opts.on('--port PORT', 'Port to listen on') { |port| }
+  opts.on('--localhost', 'Bind only to localhost') do
+    puts "Listening only on local interface..."
+    bind = '127.0.0.1'
+  end
+  opts.parse!
+
+  $crossword_store = CrosswordStore.new(datadir)
+
+  server = Mongrel::HttpServer.new(bind, port)
+  server.register('/', Mongrel::RedirectHandler.new('/session/test/'))
+  server.register('/crossword', AddSlashHandler.new)
+  cwh = CrosswordHandler.new
+  server.register('/crossword/', cwh)
+  server.register('/static/', Mongrel::DirHandler.new('static'))
+  server.register('/session', AddSlashHandler.new)
+  server.register('/session/', SessionHandler.new(cwh))
+  server.run.join
+end
+
+main if __FILE__ == $0
+
+# vim: set ts=2 sw=2 et :
