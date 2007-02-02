@@ -1,0 +1,18 @@
+﻿# A list of feature requests prompted by user testing
+
+- non-crappy javascript:
+  - no polling
+  - no memory leaks
+- player colors
+- notification of events ("player foo got 22 down: ")
+- calling others' attention to current bit: "hey, check out 22 down" (use '?' key)
+- look up def'n of words online
+- web2.0 flash on new letters
+- guesses  (hold shift while typing, makes letter gray or something)
+- show across and down clues simultaneously
+- make clues clickable
+- safari support
+- time counter
+- track original author of cell
+- score
+
