@@ -1,4 +1,4 @@
-﻿# A list of feature requests prompted by user testing
+﻿#summary A list of feature requests prompted by user testing
 
  * non-crappy javascript:
    * no polling
@@ -15,4 +15,3 @@
  * time counter
  * track original author of cell
  * score
-
