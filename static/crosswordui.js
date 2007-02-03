@@ -69,6 +69,9 @@ CrosswordWidget.prototype.loadCrossword = function(crossword) {
   table.appendChild(tbody);
   this.tbody = tbody;
 
+  this.focus = document.createElement('focus');
+  this.focus.className = 'focus';
+
   return table;
 };
 
@@ -92,19 +95,7 @@ CrosswordWidget.prototype.setFocus = function(target) {
     this.highlightRegion(target);
   } else {
     this.focused = target;
-    if (target.td.offsetWidth > 0) {
-      if (!this.focus) {
-        this.focus = document.createElement('focus');
-        this.focus.className = 'focus';
-        this.tbody.appendChild(this.focus);
-      }
-      with (this.focus.style) {
-        left   = target.td.offsetLeft - 3;
-        top    = target.td.offsetTop - 3;
-        width  = target.td.offsetWidth - 1;
-        height = target.td.offsetHeight - 1;
-      }
-    }
+    target.letter.appendChild(this.focus);
     // Only redo the highlighting if necessary.
     if (target.td.className != 'highlighted')
       this.highlightRegion(target);
@@ -196,19 +187,20 @@ CrosswordWidget.prototype.keyPress = function(e) {
   if (e.keyCode) code = e.keyCode;
   else if (e.which) code = e.which;
 
-  if (code == 35) { // end
+  // The crazy-looking key codes (63xxx) are for Safari.
+  if (code == 35 || code == 63275) { // end
     this.setFocus(
       this.getStartOrEndSquare(square, this.direction_horiz, false));
-  } else if (code == 36) { // home
+  } else if (code == 36 || code == 63273) { // home
     this.setFocus(
       this.getStartOrEndSquare(square, this.direction_horiz, true));
-  } else if (code == 37) { // left
+  } else if (code == 37 || code == 63234) { // left
     this.focusNext(square, -1, 0, true);
-  } else if (code == 38) { // up
+  } else if (code == 38 || code == 63232) { // up
     this.focusNext(square, 0, -1, true);
-  } else if (code == 39) { // right
+  } else if (code == 39 || code == 63235) { // right
     this.focusNext(square, 1, 0, true);
-  } else if (code == 40) { // down
+  } else if (code == 40 || code == 63233) { // down
     this.focusNext(square, 0, 1, true);
   } else if (code == 32) { // space
     this.direction_horiz = !this.direction_horiz;
@@ -275,19 +267,36 @@ Square = function(widget, x, y, letter, number) {
   if (number != 0) {
     var numberdiv = document.createElement('div');
     numberdiv.className = 'number';
-    numberdiv.innerHTML = number;
+    numberdiv.appendChild(document.createTextNode(number));
     this.td.appendChild(numberdiv);
   }
 
   this.letter = document.createElement('div');
   this.letter.className = 'letter';
+  // We also create a plain text node and call it "text".
+  // We'd like to do that right here, but Safari disappears the text node
+  // if it's created empty.  So we instead create it lazily below.
+  this.letter.text = undefined;  //(document.createTextNode(' '));
   this.td.appendChild(this.letter);
 };
 
 Square.prototype.fill = function(letter, is_guess) {
+  // We create letter.text lazily, but must be careful to never create
+  // one that's empty, because otherwise Safari will never show it.  :(
+  if (letter == '' || letter == ' ') {  // erasing
+    if (this.letter.text)
+      this.letter.text.data = '';
+    return;
+  }
+
   this.letter.className = 'letter' + (is_guess ? ' guess' : '');
   letter = letter.toUpperCase();
-  if (this.letter.innerHTML != letter) this.letter.innerHTML = letter;
+  if (!this.letter.text) {
+    this.letter.text = document.createTextNode(letter);
+    this.letter.appendChild(this.letter.text);
+  }
+  if (this.letter.text.data != letter)
+    this.letter.text.data = letter;
 };
 
 // vim: set ts=2 sw=2 et ai :

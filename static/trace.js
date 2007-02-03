@@ -14,8 +14,8 @@ var Trace = {
     if (!this.log)
       this.init();
     var entry = (Trace.now() - this.start) + "ms: " + str;
-    this.log.appendChild(document.createTextNode(entry));
-    this.log.appendChild(document.createElement('br'));
+    this.log.insertBefore(document.createElement('br'), this.log.firstChild);
+    this.log.insertBefore(document.createTextNode(entry), this.log.firstChild);
   }
 };
 function trace(str) {
