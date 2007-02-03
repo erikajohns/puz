@@ -69,8 +69,6 @@ CrosswordWidget.prototype.loadCrossword = function(crossword) {
   table.appendChild(tbody);
   this.tbody = tbody;
 
-  this.setFocus(this.square(0,0));
-
   return table;
 };
 

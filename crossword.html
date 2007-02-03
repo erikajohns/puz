@@ -52,6 +52,11 @@ function makeCrossword() {
       CluesUI.down.scrollTo(down_number, true);
     }
   };
+
+  // We need to wait to set focus until the table has been rendered (so
+  // that the offset stuff works) and until the clues have been created (so
+  // that the initial ones will be highlighted).  This kinda sucks.
+  widget.setFocus(widget.square(0, 0));
 }
 
 //]]>
