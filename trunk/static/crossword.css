@@ -3,19 +3,14 @@ Crossword cells are stuck in a big table.  They look like this:
   td, 1px black border -- crossword cell
     div, 3ex width/height, relative pos -- holds the cell content
     div, absolute, small font -- number, if there is one
-The focus just floats around on top:
-  div, absolute, bordered
+The focus is attached to a cell by making it a child of the cell:
+  div, absolute, bordered, sized 100%x100%
 */
 
 #crosswordui {
   font-family: sans-serif;
   border-top: solid 1px #333;
   border-left: solid 1px #333;
-  xposition: relative;
-}
-
-#crosswordui td {
-  position: relative;
 }
 
 #crosswordui td.filled {
@@ -28,9 +23,6 @@ The focus just floats around on top:
 #crosswordui td div.number {
   z-index: 1;
   position: absolute;
-  /* negative offsets to position over the highlighter. */
-  /*top: -2px;
-  left: -2px;*/
   font-size: 7pt;
 }
 
@@ -53,6 +45,10 @@ The focus just floats around on top:
 
 #crosswordui .focus {
   position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 100%;
+  height: 100%;
   border: solid 3px blue;
   z-index: 2;
 }
