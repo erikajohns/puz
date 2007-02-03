@@ -24,6 +24,9 @@ The focus just floats around on top:
 #crosswordui td.highlighted {
   background: #ccf;
 }
+#crosswordui td.guess {
+  color: #999;
+}
 
 #crosswordui td div.number {
   z-index: 1;

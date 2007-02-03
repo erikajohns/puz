@@ -5,7 +5,7 @@ function Multiplayer(serverurl, widget) {
   this.url = serverurl;
   this.widget = widget;
   var mp = this;
-  this.widget.onChanged = function(x,y,letter) { mp.addEvent(x,y,letter); }; 
+  this.widget.onChanged = function(x,y,letter) { mp.addEvent(x,y,letter); };
   this.sendUpdate('?full');
 }
 
@@ -15,6 +15,16 @@ Multiplayer.prototype.renewCallback = function() {
 }
 
 Multiplayer.prototype.addEvent = function(x, y, update) {
+  // Super cheesy -- users hit lowercase keys for regular answers and
+  // uppercase for guesses, but the client-to-server communication is
+  // probably more intuitive if sure answers are uppercase and guesses are
+  // lower, so we swap the case here.
+  var ch = update.charCodeAt(0);
+  if (ch >= 97 && ch <= 122) {
+    update = update.toUpperCase();
+  } else if (ch >= 65 && ch <= 90) {
+    update = update.toLowerCase();
+  }
   this.events.push(['foo', 'xy', x, y, update].join('\t'));
 }
 
@@ -43,7 +53,6 @@ Multiplayer.prototype.sendUpdate = function(extra) {
   }
   req.open('POST', url, true);
   //trace("sending update");
-  //trace(update);
   req.send(update);
 }
 
@@ -57,9 +66,8 @@ Multiplayer.prototype.processUpdate = function(state) {
     if (!this.widget.square(x,y))
       continue;
     var newletter = letters[i];
-    var cell = this.widget.square(x,y).letter;
-    if (cell.innerHTML != newletter)
-      cell.innerHTML = newletter;
+    var ch = newletter.charCodeAt(0);
+    this.widget.square(x,y).fill(newletter, (ch >= 97 && ch <= 122))
   }
 }
 

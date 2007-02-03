@@ -171,7 +171,7 @@ CrosswordWidget.prototype.keyPress = function(e) {
 
   if (!e) e = window.event;
   // don't eat ctl-r and friends...
-  if (e.altKey || e.ctrlKey || e.shiftKey || e.metaKey)
+  if (e.altKey || e.ctrlKey || e.metaKey)
     return true;
 
   var square = this.focused;
@@ -192,7 +192,7 @@ CrosswordWidget.prototype.keyPress = function(e) {
     this.direction_horiz = !this.direction_horiz;
     this.highlightRegion(square);
   } else if (code == 8) { // backspace
-    square.letter.innerHTML = '';
+    square.fill('', false);
     if (this.direction_horiz)
       this.focusNext(square, -1, 0, false);
     else
@@ -200,14 +200,16 @@ CrosswordWidget.prototype.keyPress = function(e) {
     if (this.onChanged)
       this.onChanged(square.x, square.y, ' ');
   } else if (code == 46) { // delete
-    square.letter.innerHTML = '';
+    square.fill('', false);
     if (this.onChanged)
       this.onChanged(square.x, square.y, ' ');
-  } else if (code >= 97 && code <= 122) { // letter
+  } else if (code >= 97 && code <= 122 ||
+             code >= 65 && code <= 90) { // letter
+             // FIXME(derat): isalpha?
     var str = String.fromCharCode(code);
-    square.letter.innerHTML = str.toUpperCase();
+    square.fill(str.toUpperCase(), code >= 65 && code <= 90 ? true : false);
     if (this.onChanged)
-      this.onChanged(square.x, square.y, square.letter.innerHTML);
+      this.onChanged(square.x, square.y, str);
     if (this.direction_horiz)
       this.focusNext(square, 1, 0, false);
     else
@@ -257,7 +259,12 @@ Square = function(widget, x, y, letter, number) {
   this.letter = document.createElement('div');
   this.letter.className = 'letter';
   this.td.appendChild(this.letter);
-
 };
+
+Square.prototype.fill = function(letter, is_guess) {
+  this.letter.style.color = is_guess ? "#999" : "#000";
+  letter = letter.toUpperCase();
+  if (this.letter.innerHTML != letter) this.letter.innerHTML = letter;
+}
 
 // vim: set ts=2 sw=2 et ai :

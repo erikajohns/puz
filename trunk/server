@@ -8,7 +8,7 @@ require 'mongrel'
 require 'optparse'
 require 'json'
 
-require '../rubypuz/lib/puz.rb'
+require 'rubypuz/puz.rb'
 
 # Tell Mongrel that we want full backtraces on errors.
 $mongrel_debug_client = true
@@ -107,9 +107,10 @@ class SessionState
   attr_reader :cells, :crossword
 
   class Cell
-    attr_accessor :letter
+    attr_accessor :letter, :guess
     def initialize
       @letter = ' '
+      @guess = false
     end
   end
 
@@ -126,11 +127,19 @@ class SessionState
   # Post an event to the play queue, user@sessid playing character c in pos x,y
   # sessid, x, y, c -> nil
   def handle_event(sessid, eventid, x, y, c)
-    raise "Unknown eventid" unless eventid == "xy"
-    
-    puts "Whoa!  Empty c! #{sessid}/#{eventid}/#{x}/#{y}/#{c}" unless c && !c.empty?
-    return if x < 0 or x >= @crossword.width or y < 0 or y >= @crossword.height
-    @cells[x][y].letter = c
+    case eventid
+    when "xy"
+      if not c or c.length != 1
+        puts "Ignoring bogus event \"#{c}\""
+        return
+      end
+      return if x < 0 or x >= @crossword.width or y < 0 or y >= @crossword.height
+      cell = @cells[x][y]
+      cell.letter = c.downcase
+      cell.guess = ('a'..'z').include? c
+    else
+      puts "Ignoring invalid event with id \"#{eventid}\""
+    end
   end
 end
 
@@ -139,7 +148,7 @@ class SessionManager
 
   def initialize
     @sessions = {}
-    @sessions['test'] ||= SessionState.new($crossword_store.get_crossword('Jan1807'))
+    @sessions['test'] ||= SessionState.new($crossword_store.crosswords.values[0])
   end
 
   def get_session sess
@@ -172,9 +181,10 @@ class SessionHandler < Mongrel::HttpHandler
         'letters' =>
           (0...session.crossword.height).map do |y|
             (0...session.crossword.width).map do |x|
-              session.cells[x][y].letter
+              cell = session.cells[x][y]
+              cell.guess ? cell.letter.downcase : cell.letter.upcase
             end.join('')
-          end.join('')
+          end.join(''),
       }
       out.puts state.to_json
     end
