@@ -170,25 +170,17 @@ CrosswordWidget.prototype.highlightRegion = function(square) {
 
   if (square) {
     this.highlighted = [];
-    var h;
+
+    var h = this.getStartOrEndSquare(square, this.direction_horiz, true);
+    var end = this.getStartOrEndSquare(square, this.direction_horiz, false);
     var dx = this.direction_horiz ? 1 : 0;
     var dy = this.direction_horiz ? 0 : 1;
 
-    var x = square.x, y = square.y;
-    while (x >= 0 && y >= 0 && this.square(x,y)) {
-      h = this.square(x,y);
+    do {
       this.highlighted.push(h);
       this.changeSquareHighlight(h, true);
-      x -= dx; y -= dy;
-    }
-    x = square.x+dx, y = square.y+dy;
-    while (x < this.crossword.width && y < this.crossword.height &&
-           this.square(x,y)) {
-      h = this.square(x,y);
-      this.highlighted.push(h);
-      this.changeSquareHighlight(h, true);
-      x += dx; y += dy;
-    }
+    } while ((h = this.square(h.x + dx, h.y + dy)) &&
+             h.x <= end.x && h.y <= end.y);
   }
 };
 
