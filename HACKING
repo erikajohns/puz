@@ -13,4 +13,15 @@ We serve these paths (where a name like <crossword> means a crossword name):
     multiplayer requests
   /session/<session>/state.js
     multiplayer game state, pulled by networking code
-    
+
+
+== Client-to-server communication
+
+Newline-separated events:
+uid	xy	x	y	ch
+
+uid - userid (not implemented)
+ xy - event type
+  x - x position
+  y - y position
+ ch - updated character (lowercase signifies a guess)
