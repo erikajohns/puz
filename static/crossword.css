@@ -24,9 +24,6 @@ The focus just floats around on top:
 #crosswordui td.highlighted {
   background: #ccf;
 }
-#crosswordui td.guess {
-  color: #999;
-}
 
 #crosswordui td div.number {
   z-index: 1;
@@ -70,7 +67,10 @@ div.crosswordclues .scroller {
   border: solid 1px #ccc;
 }
 
-div.crosswordclues .highlighted {
+div.crosswordclues .primaryhighlighted {
+  background: #ccf;
+}
+div.crosswordclues .otherhighlighted {
   background: #eef;
 }
 

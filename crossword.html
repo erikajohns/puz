@@ -43,13 +43,13 @@ function makeCrossword() {
   var clues = CluesUI.create(Crossword);
   $('cluecolumn').appendChild(clues);
 
-  widget.highlightCallback = function(number) {
+  widget.highlightCallback = function(across_number, down_number) {
     if (widget.direction_horiz) {
-      CluesUI.across.scrollTo(number);
-      CluesUI.down.unhighlight();
+      CluesUI.across.scrollTo(across_number, true);
+      CluesUI.down.scrollTo(down_number, false);
     } else {
-      CluesUI.across.unhighlight();
-      CluesUI.down.scrollTo(number);
+      CluesUI.across.scrollTo(across_number, false);
+      CluesUI.down.scrollTo(down_number, true);
     }
   };
 }
