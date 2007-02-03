@@ -19,7 +19,7 @@
 // BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
 // ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE. 
+// SOFTWARE.
 
 
 // Constructor.
@@ -71,7 +71,7 @@ CrosswordWidget.prototype.loadCrossword = function(crossword) {
 
   this.setFocus(this.square(0,0));
 
-  return table; 
+  return table;
 };
 
 // Return the square at (x, y).
@@ -140,16 +140,24 @@ CrosswordWidget.prototype.changeSquareHighlight = function(square, highlight) {
   }
 };
 
-CrosswordWidget.prototype.getNumber = function(square, direction_horiz) {
+CrosswordWidget.prototype.getStartOrEndSquare =
+    function(square, direction_horiz, is_start) {
   var dx = direction_horiz ? 1 : 0;
   var dy = direction_horiz ? 0 : 1;
+  if (is_start) { dx *= -1; dy *= -1; }
 
   var x = square.x, y = square.y;
-  while (x >= 0 && y >= 0 && this.square(x,y)) {
+  while (x >= 0 && y >= 0 &&
+         x < this.crossword.width && y < this.crossword.height &&
+         this.square(x,y)) {
     h = this.square(x,y);
-    x -= dx; y -= dy;
+    x += dx; y += dy;
   }
-  return h.number;
+  return h;
+};
+
+CrosswordWidget.prototype.getNumber = function(square, direction_horiz) {
+  return this.getStartOrEndSquare(square, direction_horiz, true).number;
 };
 
 // Starting at square, highlight all squares that are within the
@@ -198,7 +206,13 @@ CrosswordWidget.prototype.keyPress = function(e) {
   if (e.keyCode) code = e.keyCode;
   else if (e.which) code = e.which;
 
-  if (code == 37) { // left
+  if (code == 35) { // end
+    this.setFocus(
+      this.getStartOrEndSquare(square, this.direction_horiz, false));
+  } else if (code == 36) { // home
+    this.setFocus(
+      this.getStartOrEndSquare(square, this.direction_horiz, true));
+  } else if (code == 37) { // left
     this.focusNext(square, -1, 0, true);
   } else if (code == 38) { // up
     this.focusNext(square, 0, -1, true);
@@ -281,7 +295,7 @@ Square = function(widget, x, y, letter, number) {
 };
 
 Square.prototype.fill = function(letter, is_guess) {
-  this.letter.style.color = is_guess ? "#999" : "#000";
+  this.letter.className = 'letter' + (is_guess ? ' guess' : '');
   letter = letter.toUpperCase();
   if (this.letter.innerHTML != letter) this.letter.innerHTML = letter;
 };

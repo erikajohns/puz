@@ -47,6 +47,10 @@ The focus just floats around on top:
   border-bottom: solid 1px #333;
 }
 
+#crosswordui div.guess {
+  color: #999;
+}
+
 #crosswordui .focus {
   position: absolute;
   border: solid 3px blue;
