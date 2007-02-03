@@ -79,6 +79,14 @@ CrosswordWidget.prototype.square = function(x, y) {
   return this.tbody.childNodes[y].childNodes[x].square;
 }
 
+// Focus the clues for the passed-in square.
+CrosswordWidget.prototype.focusClues = function(square) {
+  if (this.highlightCallback) {
+    this.highlightCallback(
+      this.getNumber(square, true), this.getNumber(square, false));
+  }
+}
+
 // Change the focus to the given target square.
 CrosswordWidget.prototype.setFocus = function(target) {
   if (this.focused == target) {
@@ -103,6 +111,7 @@ CrosswordWidget.prototype.setFocus = function(target) {
     if (target.td.className != 'highlighted')
       this.highlightRegion(target);
   }
+  this.focusClues(target);
 };
 
 // Starting at square, move the focus by (dx,dy), stopping at the edge
@@ -131,6 +140,18 @@ CrosswordWidget.prototype.changeSquareHighlight = function(square, highlight) {
   }
 };
 
+CrosswordWidget.prototype.getNumber = function(square, direction_horiz) {
+  var dx = direction_horiz ? 1 : 0;
+  var dy = direction_horiz ? 0 : 1;
+
+  var x = square.x, y = square.y;
+  while (x >= 0 && y >= 0 && this.square(x,y)) {
+    h = this.square(x,y);
+    x -= dx; y -= dy;
+  }
+  return h.number;
+};
+
 // Starting at square, highlight all squares that are within the
 // current clue (as determined by the current input direction).
 CrosswordWidget.prototype.highlightRegion = function(square) {
@@ -151,9 +172,6 @@ CrosswordWidget.prototype.highlightRegion = function(square) {
       this.highlighted.push(h);
       this.changeSquareHighlight(h, true);
       x -= dx; y -= dy;
-    }
-    if (this.highlightCallback) {
-      this.highlightCallback(this.highlighted[this.highlighted.length-1].number);
     }
     x = square.x+dx, y = square.y+dy;
     while (x < this.crossword.width && y < this.crossword.height &&
@@ -190,6 +208,7 @@ CrosswordWidget.prototype.keyPress = function(e) {
     this.focusNext(square, 0, 1, true);
   } else if (code == 32) { // space
     this.direction_horiz = !this.direction_horiz;
+    this.focusClues(square);
     this.highlightRegion(square);
   } else if (code == 8) { // backspace
     square.fill('', false);
@@ -233,7 +252,7 @@ CrosswordWidget.prototype.selectByClue = function(horiz, number) {
       }
     }
   }
-},
+};
 
 // Constructor for our per-square data.
 Square = function(widget, x, y, letter, number) {
@@ -265,6 +284,6 @@ Square.prototype.fill = function(letter, is_guess) {
   this.letter.style.color = is_guess ? "#999" : "#000";
   letter = letter.toUpperCase();
   if (this.letter.innerHTML != letter) this.letter.innerHTML = letter;
-}
+};
 
 // vim: set ts=2 sw=2 et ai :

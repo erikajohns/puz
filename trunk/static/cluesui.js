@@ -66,14 +66,14 @@ CluesBox.prototype.unhighlight = function() {
   }
 }
 
-CluesBox.prototype.scrollTo = function(number) {
+CluesBox.prototype.scrollTo = function(number, primary) {
   if (!this.divs[number])
     return;
   var clue = this.divs[number];
   var offset = clue.offsetTop - this.scroller.offsetTop;
   this.scroller.scrollTop = offset;
   this.unhighlight();
-  clue.className = 'highlighted';
+  clue.className = primary ? 'primaryhighlighted' : 'otherhighlighted';
   this.highlighted = clue;
 }
 
