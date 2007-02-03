@@ -8,7 +8,6 @@
  * calling others' attention to current bit: "hey, check out 22 down" (use '?' key)
  * look up def'n of words online
  * web2.0 flash on new letters
- * show across and down clues simultaneously
  * make clues clickable
  * safari support
  * time counter
