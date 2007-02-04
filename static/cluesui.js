@@ -44,7 +44,7 @@ function CluesBox(title, clues) {
     entrylink.direction = title == 'across';
     entrylink.number = number;
     entrylink.onclick = function() {
-      CrosswordUI.selectByClue(this.direction, this.number);
+      if (this.selectCallback) this.selectCallback(entrylink.direction, number);
     };
     entrylink.innerHTML = number + ' ' + clues[i][1];
 
@@ -57,6 +57,8 @@ function CluesBox(title, clues) {
   container.appendChild(scroller);
 
   this.container = container;
+
+  this.selectCallback = undefined;
 };
 
 CluesBox.prototype.unhighlight = function() {
@@ -78,8 +80,6 @@ CluesBox.prototype.scrollTo = function(number, primary) {
 }
 
 var CluesUI = {
-  selectCallback: undefined,
-
   create: function(crossword) {
     var container = document.createElement('div');
     CluesUI.across = new CluesBox("across", crossword.across);
@@ -87,7 +87,12 @@ var CluesUI = {
     CluesUI.down = new CluesBox("down", crossword.down);
     container.appendChild(CluesUI.down.container);
     return container;
-  }
+  },
+
+  setSelectCallback: function(callback) {
+    CluesUI.across.selectCallback = callback;
+    CluesUI.down.selectCallback = callback;
+  },
 };
 
 // vim: set ts=2 sw=2 et :
