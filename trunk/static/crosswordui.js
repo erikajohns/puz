@@ -293,14 +293,12 @@ CrosswordWidget.prototype.keyPress = function(e) {
 
 CrosswordWidget.prototype.selectByClue = function(horiz, number) {
   this.direction_horiz = horiz;
-  var x, y;
-  return;
-  for (y = 0; y < this.crossword.height; ++y) {
-    for (x = 0; x < this.crossword.width; ++x) {
+  for (var y = 0; y < this.crossword.height; ++y) {
+    for (var x = 0; x < this.crossword.width; ++x) {
       var square = this.square(x,y);
-      if (square && squares.number == number) {
+      if (square && square.number == number) {
         this.setFocus(square);
-        break;
+        return;
       }
     }
   }

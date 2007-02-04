@@ -44,7 +44,8 @@ function CluesBox(title, clues) {
     entrylink.direction = title == 'across';
     entrylink.number = number;
     entrylink.onclick = function() {
-      if (this.selectCallback) this.selectCallback(entrylink.direction, number);
+      if (CluesUI.selectCallback)
+        CluesUI.selectCallback(this.direction, this.number);
     };
     entrylink.innerHTML = number + ' ' + clues[i][1];
 
@@ -86,12 +87,8 @@ var CluesUI = {
     container.appendChild(CluesUI.across.container);
     CluesUI.down = new CluesBox("down", crossword.down);
     container.appendChild(CluesUI.down.container);
+    CluesUI.selectCallback = undefined;
     return container;
-  },
-
-  setSelectCallback: function(callback) {
-    CluesUI.across.selectCallback = callback;
-    CluesUI.down.selectCallback = callback;
   },
 };
 

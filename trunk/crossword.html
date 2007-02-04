@@ -53,9 +53,10 @@ function makeCrossword() {
     }
   };
 
-  CluesUI.setSelectCallback(function(horiz, clue_number) {
+  CluesUI.selectCallback = function(horiz, clue_number) {
     widget.selectByClue(horiz, clue_number);
-  });
+    return false;
+  };
 
   // We need to wait to set focus until the table has been rendered (so
   // that the offset stuff works) and until the clues have been created (so
