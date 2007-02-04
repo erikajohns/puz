@@ -74,7 +74,8 @@ CluesBox.prototype.scrollTo = function(number, primary) {
     return;
   var clue = this.divs[number];
   var offset = clue.offsetTop - this.scroller.offsetTop;
-  this.scroller.scrollTop = offset;
+  this.scroller.scrollTop =
+    offset - this.scroller.clientHeight / 2 + clue.clientHeight;
   this.unhighlight();
   clue.className = 'clue ' +
     (primary ? 'primaryhighlighted' : 'otherhighlighted');
