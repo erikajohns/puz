@@ -39,8 +39,8 @@ function CluesBox(title, clues) {
   this.divs = {};
   for (i = 0; i < clues.length; ++i) {
     var number = clues[i][0];
-    var entrylink = document.createElement('a');
-    entrylink.href = '#';
+    var entrylink = document.createElement('div');
+    entrylink.className = 'clue';
     entrylink.direction = title == 'across';
     entrylink.number = number;
     entrylink.onclick = function() {
@@ -76,7 +76,8 @@ CluesBox.prototype.scrollTo = function(number, primary) {
   var offset = clue.offsetTop - this.scroller.offsetTop;
   this.scroller.scrollTop = offset;
   this.unhighlight();
-  clue.className = primary ? 'primaryhighlighted' : 'otherhighlighted';
+  clue.className = 'clue ' +
+    (primary ? 'primaryhighlighted' : 'otherhighlighted');
   this.highlighted = clue;
 }
 
