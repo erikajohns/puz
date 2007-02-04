@@ -184,20 +184,29 @@ CrosswordWidget.prototype.getNextSquare = function(square, is_next) {
   var dy = is_next ? 1 : -1;
   var x = square.x + dx;
   var y = square.y;
-  if (x < 0) { x = this.crossword.width + x; y--; }
-  if (x >= this.crossword.width) { x %= this.crossword.width; y++; }
+  if (x < 0) {
+    x = this.crossword.width + x;
+    y = (y == 0) ? this.crossword.height - 1 : y - 1;
+  }
+  if (x >= this.crossword.width) {
+    x %= this.crossword.width;
+    y = (y + 1) % this.crossword.height;
+  }
 
-  for (; y >= 0 && y < this.crossword.height;
-       y += dy, x = is_next ? 0 : this.crossword.width - 1) {
+  // yuck
+  for (; x != square.x || y != square.y;
+       y = (y + dy) % this.crossword.height,
+       y = (y < 0) ? this.crossword.height - y : y,
+       x = is_next ? 0 : this.crossword.width - 1) {
     for (; x >= 0 && x < this.crossword.width; x += dx) {
-      square = this.square(x, y);
-      if (square) return square;
+      if (this.square(x, y)) return this.square(x, y);
     }
   }
   return undefined;
 }
 
-// Get the first square of the next or previous word.
+// Get the first square of the next or previous word, wrapping around the
+// board if necessary.
 CrosswordWidget.prototype.getNextWord =
     function(square, direction_horiz, is_next) {
   if (direction_horiz == true) {
