@@ -8,8 +8,7 @@
  * calling others' attention to current bit: "hey, check out 22 down" (use '?' key)
  * look up def'n of words online
  * web2.0 flash on new letters
- * center the currently-selected clue in the list
- * hitting tab from the last clue should wrap and swap direction
+ * when tab wraps around the board, toggle word direction
  * safari support
  * time counter
  * track original author of cell
