@@ -90,6 +90,7 @@ CrosswordWidget.prototype.focusClues = function(square) {
 
 // Change the focus to the given target square.
 CrosswordWidget.prototype.setFocus = function(target) {
+  if (!target) return;
   if (this.focused == target) {
     this.direction_horiz = !this.direction_horiz;
     this.highlightRegion(target);
@@ -129,6 +130,7 @@ CrosswordWidget.prototype.changeSquareHighlight = function(square, highlight) {
   }
 };
 
+// Get the square at the start or end of the passed-in square's word.
 CrosswordWidget.prototype.getStartOrEndSquare =
     function(square, direction_horiz, is_start) {
   var dx = direction_horiz ? 1 : 0;
@@ -145,6 +147,7 @@ CrosswordWidget.prototype.getStartOrEndSquare =
   return h;
 };
 
+// Get the word number of the passed-in square.
 CrosswordWidget.prototype.getNumber = function(square, direction_horiz) {
   return this.getStartOrEndSquare(square, direction_horiz, true).number;
 };
@@ -173,6 +176,52 @@ CrosswordWidget.prototype.highlightRegion = function(square) {
   }
 };
 
+// Get the next or previous square, skipping blanks and wrapping around the
+// board if necessary.
+CrosswordWidget.prototype.getNextOrPrevSquare = function(square, is_next) {
+  var dx = is_next ? 1 : -1;
+  var dy = is_next ? 1 : -1;
+  var x = square.x + dx;
+  var y = square.y;
+  if (x < 0) { x = this.crossword.width + x; y--; }
+  if (x >= this.crossword.width) { x %= this.crossword.width; y++; }
+
+  for (; y >= 0 && y < this.crossword.height;
+       y += dy, x = is_next ? 0 : this.crossword.width - 1) {
+    for (; x >= 0 && x < this.crossword.width; x += dx) {
+      square = this.square(x, y);
+      if (square) return square;
+    }
+  }
+  return undefined;
+}
+
+// Get the first square of the next or previous word.
+CrosswordWidget.prototype.getNextOrPrevWord =
+    function(square, direction_horiz, is_next) {
+  if (direction_horiz == true) {
+    // To find the next horizontal word, we move to the end of the current
+    // word and then walk forward across the board until we find a
+    // non-black square.
+    square = this.getStartOrEndSquare(square, true, !is_next);
+    square = this.getNextOrPrevSquare(square, is_next);
+    if (!square) return undefined;
+    return this.getStartOrEndSquare(square, true, true);
+  } else {
+    // To find the next vertical word, we move to the beginning of the
+    // current word and walk forward across the board until we find a
+    // non-black square that is on the top row or has a black square above
+    // it.
+    square = this.getStartOrEndSquare(square, false, true);
+    while (square = this.getNextOrPrevSquare(square, is_next)) {
+      if (square.y == 0 || !this.square(square.x, square.y - 1)) {
+        return square;
+      }
+    }
+    return undefined;
+  }
+}
+
 CrosswordWidget.prototype.keyPress = function(e) {
   if (!this.focused) return true;
 
@@ -188,7 +237,10 @@ CrosswordWidget.prototype.keyPress = function(e) {
   else if (e.which) code = e.which;
 
   // The crazy-looking key codes (63xxx) are for Safari.
-  if (code == 35 || code == 63275) { // end
+  if (code == 9) { // tab
+    this.setFocus(
+      this.getNextOrPrevWord(square, this.direction_horiz, !e.shiftKey));
+  } else if (code == 35 || code == 63275) { // end
     this.setFocus(
       this.getStartOrEndSquare(square, this.direction_horiz, false));
   } else if (code == 36 || code == 63273) { // home
@@ -229,6 +281,10 @@ CrosswordWidget.prototype.keyPress = function(e) {
       this.focusNext(square, 1, 0, false);
     else
       this.focusNext(square, 0, 1, false);
+    // If this word is done, move on to the next one.
+    if (this.focused == square)
+      this.setFocus(
+        this.getNextOrPrevWord(square, this.direction_horiz, true));
   } else {
     return true;
   }
