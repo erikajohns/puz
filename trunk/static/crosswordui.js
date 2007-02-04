@@ -168,8 +168,8 @@ CrosswordWidget.prototype.highlightRegion = function(square) {
     do {
       this.highlighted.push(h);
       this.changeSquareHighlight(h, true);
-    } while ((h = this.square(h.x + dx, h.y + dy)) &&
-             h.x <= end.x && h.y <= end.y);
+    } while (h.x + dx <= end.x && h.y + dy <= end.y &&
+             (h = this.square(h.x + dx, h.y + dy)));
   }
 };
 
