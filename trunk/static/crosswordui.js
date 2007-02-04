@@ -89,10 +89,11 @@ CrosswordWidget.prototype.focusClues = function(square) {
 }
 
 // Change the focus to the given target square.
-CrosswordWidget.prototype.setFocus = function(target) {
+CrosswordWidget.prototype.setFocus = function(target, flip_if_focused) {
   if (!target) return;
   if (this.focused == target) {
-    this.direction_horiz = !this.direction_horiz;
+    if (flip_if_focused)
+      this.direction_horiz = !this.direction_horiz;
     this.highlightRegion(target);
   } else {
     this.focused = target;
@@ -114,7 +115,7 @@ CrosswordWidget.prototype.focusNext = function(square, dx, dy, skip) {
   while (x >= 0 && y >= 0 && x < this.crossword.width && y < this.crossword.height) {
     square = this.square(x,y);
     if (square) {
-      this.setFocus(square);
+      this.setFocus(square, false);
       return;
     }
     if (!skip) return;
@@ -239,13 +240,13 @@ CrosswordWidget.prototype.keyPress = function(e) {
   // The crazy-looking key codes (63xxx) are for Safari.
   if (code == 9) { // tab
     this.setFocus(
-      this.getNextOrPrevWord(square, this.direction_horiz, !e.shiftKey));
+      this.getNextOrPrevWord(square, this.direction_horiz, !e.shiftKey), false);
   } else if (code == 35 || code == 63275) { // end
     this.setFocus(
-      this.getStartOrEndSquare(square, this.direction_horiz, false));
+      this.getStartOrEndSquare(square, this.direction_horiz, false), false);
   } else if (code == 36 || code == 63273) { // home
     this.setFocus(
-      this.getStartOrEndSquare(square, this.direction_horiz, true));
+      this.getStartOrEndSquare(square, this.direction_horiz, true), false);
   } else if (code == 37 || code == 63234) { // left
     this.focusNext(square, -1, 0, true);
   } else if (code == 38 || code == 63232) { // up
@@ -284,7 +285,7 @@ CrosswordWidget.prototype.keyPress = function(e) {
     // If this word is done, move on to the next one.
     if (this.focused == square)
       this.setFocus(
-        this.getNextOrPrevWord(square, this.direction_horiz, true));
+        this.getNextOrPrevWord(square, this.direction_horiz, true), false);
   } else {
     return true;
   }
@@ -297,7 +298,7 @@ CrosswordWidget.prototype.selectByClue = function(horiz, number) {
     for (var x = 0; x < this.crossword.width; ++x) {
       var square = this.square(x,y);
       if (square && square.number == number) {
-        this.setFocus(square);
+        this.setFocus(square, false);
         return;
       }
     }
@@ -314,7 +315,7 @@ Square = function(widget, x, y, letter, number) {
   var square = this;
   this.td = document.createElement('td');
   this.td.square = this;   // this is probably bad for IE...  *shrug*
-  this.td.onmousedown = function() { widget.setFocus(this.square); };
+  this.td.onmousedown = function() { widget.setFocus(this.square, true); };
 
   this.answer = letter;
 
