@@ -8,16 +8,42 @@ body {
 }
 
 h1 {
-  padding-bottom: 0.5ex
+  font-size: 130%;
+  margin: 0.2ex;
 }
 
 h2 {
   font-size: 100%;
   margin: 0;
 }
+
+#help {
+  z-index: 5;
+  visibility: hidden;
+  width: 40ex;
+  position: absolute;
+  top: 7ex;
+  right: 7ex;
+  border: solid 1px black;
+  background: #ffc;
+  padding: 2em;
+}
+#help ul {
+  margin-top: 1ex;
+}
+
+#crossword {
+  float: left;
+  margin-right: 4ex;
+}
+#clues {
+  float: left;
+}
+#console {
+  clear: both;
+}
 </style>
 
-<script src='../../static/trace.js'></script>
 <script src='../../static/console.js'></script>
 <script src='../../static/crosswordui.js'></script>
 <script src='../../static/cluesui.js'></script>
@@ -35,21 +61,11 @@ function makeCrossword() {
   if (document.location.href.indexOf('/session/') != 0)
     var mp = new Multiplayer(document.location.href, widget);
 
-  var console_head = document.createElement('p');
-  console_head.innerHTML = "Messages:";
-  $('crossword').appendChild(console_head);
-
   var console = new Console(15);
-  $('crossword').appendChild(console.scroller);
-
-  var instructions = document.createElement('p');
-  instructions.innerHTML = "Select position using the mouse and arrow keys.  " +
-    "Enter answers with the keyboard.  " +
-    "Switch direction using the space bar."
-  $('crossword').appendChild(instructions);
+  $('console').appendChild(console.scroller);
 
   var clues = CluesUI.create(Crossword);
-  $('cluecolumn').appendChild(clues);
+  $('clues').appendChild(clues);
 
   widget.highlightCallback = function(across_number, down_number) {
     if (widget.direction_horiz) {
@@ -78,15 +94,36 @@ function makeCrossword() {
 
 <body onload='makeCrossword()'>
 
+<div style='float: right'>
+<a onclick='$("help").style.visibility="visible";return false'
+   href='#'>Show Help</a>
+</div>
+
 <h1 id='title'></h1>
 
-<table width='100%' cellspacing='0' cellpadding='0'><tr valign='top'>
-<td width='0%' id='crossword' width='1%' valign='top'></td>
-<td>&nbsp;&nbsp;&nbsp;&nbsp;</td>
-<td id='cluecolumn'></td>
-</tr></table>
+<div id='help' onmousedown="$('help').style.visibility='hidden'">
+<h2>Basics</h2>
+<ul>
+  <li>Move the cursor using the mouse and arrow keys.</li>
+  <li>Enter answers with the keyboard.</li>
+  <li>Switch direction (between across and down) using the space bar.</li>
+</ul>
+<h2>Advanced</h2>
+<ul>
+  <li>Hit tab to advance to the next clue along the current axis.</li>
+  <li>Hold shift while typing letters to mark an entry you're unsure of; the
+  letters will display in a lighter color.</li>
+</ul>
+<p>(Click to hide this window.)</p>
+</div>
 
-<div id='trace'></div>
+<div id='crossword'></div>
+<div id='clues'>
+</div>
+
+<div id='console'>
+</div>
+
 </body>
 </html>
 <!-- vim: set ts=2 sw=2 et : -->

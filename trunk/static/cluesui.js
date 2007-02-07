@@ -24,14 +24,13 @@
 
 function CluesBox(title, clues) {
   var container = document.createElement('div');
-  container.className = 'crosswordclues';
+  container.className = 'cluesbox';
 
   var heading = document.createElement('h2')
   heading.appendChild(document.createTextNode(title.toUpperCase()));
   container.appendChild(heading);
 
   var scroller = document.createElement('div');
-  scroller.style.overflow = 'auto';
   scroller.frameborder = 0;
   scroller.className = 'scroller';
   this.scroller = scroller;
