@@ -112,7 +112,8 @@ CrosswordWidget.prototype.focusNext = function(square, dx, dy, skip) {
   var y = square.y;
 
   x += dx; y += dy;
-  while (x >= 0 && y >= 0 && x < this.crossword.width && y < this.crossword.height) {
+  while (x >= 0 && x < this.crossword.width &&
+         y >= 0 && y < this.crossword.height) {
     square = this.square(x,y);
     if (square) {
       this.setFocus(square, false);
@@ -291,10 +292,6 @@ CrosswordWidget.prototype.keyPress = function(e) {
       this.focusNext(square, 1, 0, false);
     else
       this.focusNext(square, 0, 1, false);
-    // If this word is done, move on to the next one.
-    if (this.focused == square)
-      this.setFocus(
-        this.getNextWord(square, this.direction_horiz, true), false);
   } else {
     return true;
   }
