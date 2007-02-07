@@ -18,6 +18,7 @@ h2 {
 </style>
 
 <script src='../../static/trace.js'></script>
+<script src='../../static/console.js'></script>
 <script src='../../static/crosswordui.js'></script>
 <script src='../../static/cluesui.js'></script>
 <script src='../../static/multiplayer.js'></script>
@@ -33,6 +34,13 @@ function makeCrossword() {
   $('crossword').appendChild(widget.loadCrossword(Crossword));
   if (document.location.href.indexOf('/session/') != 0)
     var mp = new Multiplayer(document.location.href, widget);
+
+  var console_head = document.createElement('p');
+  console_head.innerHTML = "Messages:";
+  $('crossword').appendChild(console_head);
+
+  var console = new Console(15);
+  $('crossword').appendChild(console.scroller);
 
   var instructions = document.createElement('p');
   instructions.innerHTML = "Select position using the mouse and arrow keys.  " +

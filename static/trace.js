@@ -20,4 +20,4 @@ var Trace = {
 };
 function trace(str) {
   Trace.stamp(str);
-}
+};

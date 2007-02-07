@@ -67,7 +67,7 @@ CluesBox.prototype.unhighlight = function() {
     this.highlighted.className = '';
     this.highlighted = 0;
   }
-}
+};
 
 CluesBox.prototype.scrollTo = function(number, primary) {
   if (!this.divs[number])
@@ -80,7 +80,7 @@ CluesBox.prototype.scrollTo = function(number, primary) {
   clue.className = 'clue ' +
     (primary ? 'primaryhighlighted' : 'otherhighlighted');
   this.highlighted = clue;
-}
+};
 
 var CluesUI = {
   create: function(crossword) {

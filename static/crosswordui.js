@@ -78,7 +78,7 @@ CrosswordWidget.prototype.loadCrossword = function(crossword) {
 // Return the square at (x, y).
 CrosswordWidget.prototype.square = function(x, y) {
   return this.tbody.childNodes[y].childNodes[x].square;
-}
+};
 
 // Focus the clues for the passed-in square.
 CrosswordWidget.prototype.focusClues = function(square) {
@@ -86,7 +86,7 @@ CrosswordWidget.prototype.focusClues = function(square) {
     this.highlightCallback(
       this.getNumber(square, true), this.getNumber(square, false));
   }
-}
+};
 
 // Change the focus to the given target square.
 CrosswordWidget.prototype.setFocus = function(target, flip_if_focused) {
@@ -203,7 +203,7 @@ CrosswordWidget.prototype.getNextSquare = function(square, is_next) {
     }
   }
   return undefined;
-}
+};
 
 // Get the first square of the next or previous word, wrapping around the
 // board if necessary.
@@ -230,7 +230,7 @@ CrosswordWidget.prototype.getNextWord =
     }
     return undefined;
   }
-}
+};
 
 CrosswordWidget.prototype.keyPress = function(e) {
   if (!this.focused) return true;
