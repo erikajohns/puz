@@ -53,37 +53,32 @@ The focus is attached to a cell by making it a child of the cell:
   z-index: 2;
 }
 
-div.crosswordclues {
-  margin-bottom: 1ex;
+div.cluesbox {
+  padding-bottom: 1ex;
   width: 40ex;
 }
 
-div.crosswordclues .scroller {
-  height: 15em;
-  /*border-top:    solid 2px #333;
-  border-left:   solid 2px #333;
-  border-bottom: solid 2px #ccc;
-  border-right:  solid 2px #ccc;*/
+div.cluesbox .scroller {
+  overflow: hidden;
   border: solid 1px #ccc;
+  height: 12em;
 }
 
-div.crosswordclues .primaryhighlighted {
+div.cluesbox .primaryhighlighted {
   background: #ccf;
 }
-div.crosswordclues .otherhighlighted {
+div.cluesbox .otherhighlighted {
   background: #eef;
 }
 
-div.crosswordclues .clue {
+div.cluesbox .clue {
   cursor: pointer;
 }
 
-div.console {
-  height: 10em;
-  border: solid 1px #ccc;
+#console {
   padding: 0.2em;
 }
 
-div.console span.time {
+#console span.time {
   color: #aaa;
 }

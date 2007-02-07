@@ -37,3 +37,6 @@ Console.prototype.write = function(str) {
 function log(str) {
   if (console_main) console_main.write(str);
 }
+function trace(str) {
+  log(str);
+}
