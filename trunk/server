@@ -49,8 +49,9 @@ def crossword_to_hash cw
 end
 
 def redirect_with_slash(request, response)
-  response.socket.write(Mongrel::Const::REDIRECT %
-                        (request.params['REQUEST_URI'] + '/'))
+  path = request.params['REQUEST_URI']
+  puts "#{path.inspect}: adding slash"
+  response.socket.write(Mongrel::Const::REDIRECT % (path + '/'))
 end
 
 # CrosswordStore supplies the actual crossword data, allowing enumerating
@@ -157,10 +158,31 @@ class SessionManager
 end
 
 
-# An exception so we can pass 404s around more easily.
-class NotFound < RuntimeError; end
+# A wrapper around Mongrel's HTTP handler that adds some functionality.
+class HttpHandler < Mongrel::HttpHandler
+  # An exception so we can pass 404s around more easily.
+  class NotFound < RuntimeError; end
 
-class SessionHandler < Mongrel::HttpHandler
+  def process(request, response)
+    req_path = request.params['PATH_INFO']
+    #puts "request path #{req_path.inspect}"
+    # The second param to split causes it to leave in trailing empty fields;
+    # otherwise we couldn't distinguish path "foo/" from just "foo".
+    path = req_path.split('/', -1)
+    #puts "split path #{path.inspect}"
+    begin
+      req_main(request, response, path)
+    rescue NotFound
+      puts "404: #{req_path}"
+      response.start(404) do |head, out|
+        head['Content-type'] = 'text/plain'
+        out.puts "NOT FOUND"
+      end
+    end
+  end
+end
+
+class SessionHandler < HttpHandler
   def initialize(cwh)
     @sessmgr = SessionManager.new
     @crossword_handler = cwh
@@ -193,7 +215,7 @@ class SessionHandler < Mongrel::HttpHandler
   # Process a request underneath a specific session's path.
   def req_session(request, response, session, path)
     if session.crossword
-      case path
+      case path[0]
       when 'state.js'
         if request.params['REQUEST_METHOD'] != 'POST'
           response.send_status 400
@@ -226,25 +248,19 @@ class SessionHandler < Mongrel::HttpHandler
   end
 
   # Process a request at the toplevel /session/... URL.
-  def process(request, response)
-    req_path = request.params['PATH_INFO']
-    session_name, path = req_path.split('/', 2)
-    begin
-      if session_name
-        session = @sessmgr.get_session(session_name)
-        raise NotFound unless session
-        req_session(request, response, session, path)
-      else
-        req_list(request, response)
-      end
-    rescue NotFound
-      puts "404: #{req_path}"
-      response.send_status 404
+  def req_main(request, response, path)
+    session_name = path.shift
+    if session_name
+      session = @sessmgr.get_session(session_name)
+      raise NotFound unless session
+      req_session(request, response, session, path)
+    else
+      req_list(request, response)
     end
   end
 end
 
-class CrosswordHandler < Mongrel::HttpHandler
+class CrosswordHandler < HttpHandler
   def req_list(request, response)
     response.start do |head, out|
       head['Content-type'] = 'text/html'
@@ -258,9 +274,8 @@ class CrosswordHandler < Mongrel::HttpHandler
 
   # Process a request for a specific crossword.
   def req_crossword(request, response, crossword, path)
-    case path
-    when nil
-      redirect_with_slash(request, response)
+    redirect_with_slash(request, response) if path.empty?
+    case path.shift
     when ''
       respond_with_file(request, response, 'crossword.html', 'text/html')
     when 'crossword.js'
@@ -275,20 +290,14 @@ class CrosswordHandler < Mongrel::HttpHandler
   end
 
   # Process a request for /crossword/... URLs.
-  def process(request, response)
-    req_path = request.params['PATH_INFO']
-    begin
-      crossword_name, path = req_path.split('/', 2)
-      if crossword_name
-        crossword = $crossword_store.get_crossword(crossword_name)
-        raise NotFound unless crossword
-        req_crossword(request, response, crossword, path)
-      else
-        req_list(request, response)
-      end
-    rescue NotFound
-      puts "404: #{req_path}"
-      response.send_status 404
+  def req_main(request, response, path)
+    crossword_name = path.shift
+    if crossword_name
+      crossword = $crossword_store.get_crossword(crossword_name)
+      raise NotFound unless crossword
+      req_crossword(request, response, crossword, path)
+    else
+      req_list(request, response)
     end
   end
 
@@ -300,6 +309,18 @@ class CrosswordHandler < Mongrel::HttpHandler
   end
 end
 
+class FrontPageHandler < HttpHandler
+  def req_main(request, response, path)
+    raise NotFound unless path == ['', '']
+    response.start do |head, out|
+      head['Content-type'] = 'text/html'
+      out.puts "<a href='crossword/'>single player</a><br/>"
+      out.puts "<a href='session/'>multiplayer</a>"
+    end
+  end
+end
+
+# This handler just redirects to the same URL with a slash appended.
 class AddSlashHandler < Mongrel::HttpHandler
   def process(request, response)
     redirect_with_slash(request, response)
@@ -323,7 +344,7 @@ def main
   $crossword_store = CrosswordStore.new(datadir)
 
   server = Mongrel::HttpServer.new(bind, port)
-  server.register('/', Mongrel::RedirectHandler.new('/session/test/'))
+  server.register('/', FrontPageHandler.new)
   server.register('/crossword', AddSlashHandler.new)
   cwh = CrosswordHandler.new
   server.register('/crossword/', cwh)
