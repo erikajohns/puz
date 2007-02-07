@@ -7,12 +7,12 @@ function Multiplayer(serverurl, widget) {
   var mp = this;
   this.widget.onChanged = function(x,y,letter) { mp.addEvent(x,y,letter); };
   this.sendUpdate('?full');
-}
+};
 
 Multiplayer.prototype.renewCallback = function() {
   var mp = this;
   window.setTimeout(function(){mp.sendUpdate()}, 200);
-}
+};
 
 Multiplayer.prototype.addEvent = function(x, y, update) {
   // Super cheesy -- users hit lowercase keys for regular answers and
@@ -26,7 +26,7 @@ Multiplayer.prototype.addEvent = function(x, y, update) {
     update = update.toLowerCase();
   }
   this.events.push(['foo', 'xy', x, y, update].join('\t'));
-}
+};
 
 // Send an update to the server and forward its response to processUpdate.
 Multiplayer.prototype.sendUpdate = function(extra) {
@@ -54,7 +54,7 @@ Multiplayer.prototype.sendUpdate = function(extra) {
   req.open('POST', url, true);
   //trace("sending update");
   req.send(update);
-}
+};
 
 Multiplayer.prototype.processUpdate = function(state) {
   //trace("processing update");
@@ -69,5 +69,4 @@ Multiplayer.prototype.processUpdate = function(state) {
     var ch = newletter.charCodeAt(0);
     this.widget.square(x,y).fill(newletter, (ch >= 97 && ch <= 122))
   }
-}
-
+};
