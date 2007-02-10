@@ -270,7 +270,7 @@ CrosswordWidget.prototype.keyPress = function(e) {
     this.focusClues(square);
     this.highlightRegion(square);
   } else if (code == 8) { // backspace
-    square.fill('', false);
+    square.fill('', undefined, false);
     if (this.direction_horiz)
       this.focusNext(square, -1, 0, false);
     else
@@ -278,14 +278,15 @@ CrosswordWidget.prototype.keyPress = function(e) {
     if (this.onChanged)
       this.onChanged(square.x, square.y, ' ');
   } else if (code == 46) { // delete
-    square.fill('', false);
+    square.fill('', undefined, false);
     if (this.onChanged)
       this.onChanged(square.x, square.y, ' ');
   } else if (code >= 97 && code <= 122 ||
              code >= 65 && code <= 90) { // letter
              // FIXME(derat): isalpha?
     var str = String.fromCharCode(code);
-    square.fill(str.toUpperCase(), code >= 65 && code <= 90 ? true : false);
+    square.fill(str.toUpperCase(), undefined,
+                code >= 65 && code <= 90 ? true : false);
     if (this.onChanged)
       this.onChanged(square.x, square.y, str);
     if (this.direction_horiz)
@@ -341,7 +342,7 @@ Square = function(widget, x, y, letter, number) {
   this.td.appendChild(this.letter);
 };
 
-Square.prototype.fill = function(letter, is_guess) {
+Square.prototype.fill = function(letter, color, is_guess) {
   // We create letter.text lazily, but must be careful to never create
   // one that's empty, because otherwise Safari will never show it.  :(
   if (letter == '' || letter == ' ') {  // erasing
@@ -358,6 +359,10 @@ Square.prototype.fill = function(letter, is_guess) {
   }
   if (this.letter.text.data != letter)
     this.letter.text.data = letter;
+
+  if (color) {
+    this.td.style.background = color;
+  }
 };
 
 // vim: set ts=2 sw=2 et ai :
