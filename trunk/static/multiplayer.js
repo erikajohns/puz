@@ -1,3 +1,7 @@
+function User(name, color) {
+  this.name = name;
+  this.color = color;
+}
 
 function Multiplayer(serverurl, widget) {
   this.players = {};
@@ -25,7 +29,7 @@ Multiplayer.prototype.addEvent = function(x, y, update) {
   } else if (ch >= 65 && ch <= 90) {
     update = update.toLowerCase();
   }
-  this.events.push(['foo', 'xy', x, y, update].join('\t'));
+  this.events.push(['xy', x, y, update].join('\t'));
 };
 
 // Send an update to the server and forward its response to processUpdate.
@@ -58,7 +62,17 @@ Multiplayer.prototype.sendUpdate = function(extra) {
 
 Multiplayer.prototype.processUpdate = function(state) {
   //trace("processing update");
+  if (state.roster) {
+    //log('processing roster');
+    this.players = {};
+    for (var i = 0; i < state.roster.length; ++i) {
+      var user = state.roster[i];
+      this.players[user.uid] = new User(user.name, user.color);
+    }
+  }
+
   var letters = state.letters.split('');
+  var owners = state.owners.split('');
   var width = this.widget.crossword.width;
   for (var i = 0; i < letters.length; ++i) {
     var y = parseInt(i / width);
@@ -67,6 +81,9 @@ Multiplayer.prototype.processUpdate = function(state) {
       continue;
     var newletter = letters[i];
     var ch = newletter.charCodeAt(0);
-    this.widget.square(x,y).fill(newletter, (ch >= 97 && ch <= 122))
+    this.widget.square(x,y).fill(
+      newletter,
+      owners[i] != ' ' ? this.players[owners[i]].color : undefined,
+      (ch >= 97 && ch <= 122));
   }
 };

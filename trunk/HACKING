@@ -18,7 +18,7 @@ We serve these paths (where a name like <crossword> means a crossword name):
 == Client-to-server communication
 
 Newline-separated events:
-uid	xy	x	y	ch
+xy	x	y	ch
 
 uid - userid (not implemented)
  xy - event type

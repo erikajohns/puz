@@ -17,7 +17,7 @@ The focus is attached to a cell by making it a child of the cell:
   background: #333;
 }
 #crosswordui td.highlighted {
-  background: #ccf;
+  background: #ccf !important;
 }
 
 #crosswordui td div.number {

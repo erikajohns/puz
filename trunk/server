@@ -4,6 +4,7 @@
 
 require 'rubygems'
 
+require 'cgi'
 require 'mongrel'
 require 'optparse'
 require 'json'
@@ -108,10 +109,59 @@ class SessionState
   attr_reader :cells, :crossword
 
   class Cell
-    attr_accessor :letter, :guess
+    attr_accessor :letter, :guess, :uid
     def initialize
       @letter = ' '
       @guess = false
+      @uid = nil
+    end
+  end
+
+  class Roster
+    class User
+      attr_accessor :name, :session_uid, :last_poll_time, :color
+      def initialize
+        @name = 'anonymous'
+        @session_uid = nil
+        @last_poll_time = nil
+        @color = '#ddd'
+      end
+    end
+
+    def initialize
+      @last_update_time = nil
+      @users = {}
+      @available_session_uids = ('a'..'z').map + ('A'..'Z').map
+      @available_colors = '#eea #fdd #dfd'.split
+    end
+
+    def get_session_uid(uid)
+      @users[uid].session_uid
+    end
+
+    def poll(uid, force)
+      user = @users[uid]
+      if not user
+        user = User.new
+        user.session_uid = @available_session_uids.shift
+        user.color = @available_colors.shift if @available_colors.length > 0
+        @users[uid] = user
+        @last_update_time = Time.now
+      end
+
+      roster = []
+      if force or user.last_poll_time == nil or
+          user.last_poll_time <= @last_update_time
+        @users.each do |uid, u|
+          roster << {
+            'uid' => u.session_uid,
+            'name' => u.name,
+            'color' => u.color
+          }
+        end
+      end
+      user.last_poll_time = Time.now
+      roster
     end
   end
 
@@ -123,14 +173,15 @@ class SessionState
         Cell.new
       end
     end
+    @roster = Roster.new
   end
 
-  # Post an event to the play queue, user@sessid playing character c in pos x,y
-  # sessid, x, y, c -> nil
-  def handle_event(sessid, eventid, x, y, c)
+  # Post an event to the play queue, user playing character c in pos x,y
+  # uid, x, y, c -> nil
+  def handle_event(uid, eventid, x, y, c)
     case eventid
     when "xy"
-      if not c or c.length != 1
+      if not c or c !~ /^[a-zA-Z ]$/
         puts "Ignoring bogus event \"#{c}\""
         return
       end
@@ -138,9 +189,34 @@ class SessionState
       cell = @cells[x][y]
       cell.letter = c.downcase
       cell.guess = ('a'..'z').include? c
+      cell.uid = (c != ' ') ? uid : nil
     else
       puts "Ignoring invalid event with id \"#{eventid}\""
     end
+  end
+
+  def get_state_for_user(uid, full)
+    state = {}
+    state['letters'] =
+      (0...@crossword.height).map do |y|
+        (0...@crossword.width).map do |x|
+          cell = @cells[x][y]
+          cell.guess ? cell.letter.downcase : cell.letter.upcase
+        end.join('')
+      end.join('')
+
+    roster = @roster.poll(uid, full)
+    state['roster'] = roster if roster.length > 0
+
+    state['owners'] =
+      (0...@crossword.height).map do |y|
+        (0...@crossword.width).map do |x|
+          cell = @cells[x][y]
+          cell.uid ? @roster.get_session_uid(cell.uid) : ' '
+        end.join('')
+      end.join('')
+
+    state
   end
 end
 
@@ -190,24 +266,23 @@ class SessionHandler < HttpHandler
 
   # Process a state update for a specific session.
   def req_state(request, response, session, body)
+    # XXX: get uid from cookie, maybe... for now, we just hash the ip and ua
+    uid = (request.params['REMOTE_ADDR'] +
+           request.params['HTTP_USER_AGENT']).hash
+
+    params = request.params['QUERY_STRING']?
+      CGI.parse(request.params['QUERY_STRING']) : {}
+
     body.split("\n").each do |line|
-      sessid, event_type, x, y, update = line.split("\t")
-      session.handle_event(sessid, event_type, x.to_i, y.to_i, update)
+      event_type, x, y, update = line.split("\t")
+      session.handle_event(uid, event_type, x.to_i, y.to_i, update)
     end
 
     #sleep 1
 
     response.start do |head, out|
       head['Content-type'] = 'text/javascript'
-      state = {
-        'letters' =>
-          (0...session.crossword.height).map do |y|
-            (0...session.crossword.width).map do |x|
-              cell = session.cells[x][y]
-              cell.guess ? cell.letter.downcase : cell.letter.upcase
-            end.join('')
-          end.join(''),
-      }
+      state = session.get_state_for_user(uid, params['full'])
       out.puts state.to_json
     end
   end
