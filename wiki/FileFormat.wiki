@@ -32,7 +32,7 @@ below.
 || Version String(?) || 0x18 || 0x1B || 0x4 || string || e.g. "1.2\0" ||
 || Reserved1C(?) || 0x1C || 0x1D || 0x2 || ? || In many files, this is uninitialized memory ||
 || Unknown || 0x1E || 0x1F || 0x2 || ? || In all files, this is set to 0x0000(?) ||
-|| Reserved20(?) || 0x20 || 0x2B || 0xB || ? || In files where Reserved1C is garbage, this is garbage too. ||
+|| Reserved20(?) || 0x20 || 0x2B || 0xC || ? || In files where Reserved1C is garbage, this is garbage too. ||
 || Width || 0x2C || 0x2C || 0x1 || byte || The width of the board ||
 || Height || 0x2D || 0x2D || 0x1 || byte || The height of the board ||
 || # of Clues || 0x2E || 0x2F || 0x2 || short || The number of clues for this board ||
@@ -76,7 +76,7 @@ These first three example strings would appear in the file as the following, whe
 Theme: .PUZ format\0J. Puz / W. Shortz\0(c) 2007 J. Puz\0
 }}}
 
-The "Across" clues come before the "Down" clues.
+The "Across" clues come before the "Down" clues.  (comment from Chris Jones: It's a bit misleading to say 'The "Across" clues come before the "Down" clues.'. The clues should be in numerical order, then with "Across" before "Down" for clues with the same number.)
 
 = Clue Assignment =
 Nowhere in the file does it specify which cells get numbers or which clues correspond to which numbers.  These are instead derived from the shape of the puzzle.
