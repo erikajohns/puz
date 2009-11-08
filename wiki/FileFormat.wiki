@@ -12,7 +12,8 @@ We have no real financial interest in this; it was just a fun hack.
 The file is laid out like this:
   # a fixed-size header with information like the width and height of the puzzle
   # the puzzle solution and the current state of the cells, with size determined by the puzzle dimensions described in the previous section
-  # a series of NUL-terminated variable-length strings with information like the author, copyright, and the puzzle clues
+  # a series of NUL-terminated variable-length strings with information like the author, copyright, the puzzle clues and a note about the puzzle.
+  # optionally, a series of sections with additional information about the puzzle, like rebuses, circled squares, and timer data.
 
 == Header Format ==
 Define a _short_ to be a little-endian two byte integer.  The file header is then described in the following table.
@@ -200,6 +201,40 @@ file[0x17] = 0x44 ^ ((c_part & 0xFF00) >> 8);
 
 Note that these hex values in ASCII are the string "ICHEATED".
 
+= Extra Sections =
+
+The known extra sections are:
+
+ || *Section Name* || *Description* || 
+ || GRBS || where rebuses are located in the solution ||
+ || RTBL || contents of rebus squares, referred to by GRBS ||
+ || LTIM || timer data ||
+ || GEXT || circled squares, incorrect and given flags ||
+ || RUSR || user-entered rebus squares ||
+
+In official puzzles, the sections always seem to come in this order, when they appear.  It is not known if the ordering is garunteed.  The GRBS and RTBL sections appear together in puzzles with rebuses.  However, sometimes a GRBS section with no rebus squares appears without an RTBL, especially in puzzles that have additional extra sections.
+
+The extra sections all follow the same general format, with variation in the data they contain.  That format is:
+
+ || *Component* || *Length* (bytes) || *Description* ||
+ || Title || 0x04 || The name of the section, these are given in the previous table ||
+ || Length || 0x02 || The length of the data section, in bytes, not counting the null terminator ||
+ || Checksum || 0x02 || A checksum of the data section, using the same algorithm described above ||
+ || Data || variable || The data, which varies in format but is always terminated by null and has the specified length ||
+
+The format of the data for each section is described below.
+
+== GRBS ==
+
+== RTBL ==
+
+== LTIM ==
+
+== GEXT ==
+
+== RUSR ==
+
+
 = Credit =
 Most of this document is by [http://joshisanerd.com Josh Myer], with some
-work also done by [http://neugierig.org Evan Martin].
+work also done by [http://neugierig.org Evan Martin].  [http://www.cis.upenn.edu/~ccasin Chris Casinghino] added documentation of the optional extra sections, with help from [http://www.cis.upenn.edu/~mgree Michael Greenberg].  The commenters below, including mrichards42@gmx.com and boisvert42, also contributed.
