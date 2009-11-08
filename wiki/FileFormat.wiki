@@ -205,22 +205,22 @@ Note that these hex values in ASCII are the string "ICHEATED".
 
 The known extra sections are:
 
- || *Section Name* || *Description* || 
- || GRBS || where rebuses are located in the solution ||
- || RTBL || contents of rebus squares, referred to by GRBS ||
- || LTIM || timer data ||
- || GEXT || circled squares, incorrect and given flags ||
- || RUSR || user-entered rebus squares ||
+|| *Section Name* || *Description* ||
+|| GRBS || where rebuses are located in the solution ||
+|| RTBL || contents of rebus squares, referred to by GRBS ||
+|| LTIM || timer data ||
+|| GEXT || circled squares, incorrect and given flags ||
+|| RUSR || user-entered rebus squares ||
 
-In official puzzles, the sections always seem to come in this order, when they appear.  It is not known if the ordering is garunteed.  The GRBS and RTBL sections appear together in puzzles with rebuses.  However, sometimes a GRBS section with no rebus squares appears without an RTBL, especially in puzzles that have additional extra sections.
+In official puzzles, the sections always seem to come in this order, when they appear.  It is not known if the ordering is guaranteed.  The GRBS and RTBL sections appear together in puzzles with rebuses.  However, sometimes a GRBS section with no rebus squares appears without an RTBL, especially in puzzles that have additional extra sections.
 
 The extra sections all follow the same general format, with variation in the data they contain.  That format is:
 
- || *Component* || *Length* (bytes) || *Description* ||
- || Title || 0x04 || The name of the section, these are given in the previous table ||
- || Length || 0x02 || The length of the data section, in bytes, not counting the null terminator ||
- || Checksum || 0x02 || A checksum of the data section, using the same algorithm described above ||
- || Data || variable || The data, which varies in format but is always terminated by null and has the specified length ||
+|| *Component* || *Length* (bytes) || *Description* ||
+|| Title || 0x04 || The name of the section, these are given in the previous table ||
+|| Length || 0x02 || The length of the data section, in bytes, not counting the null terminator ||
+|| Checksum || 0x02 || A checksum of the data section, using the same algorithm described above ||
+|| Data || variable || The data, which varies in format but is always terminated by null and has the specified length ||
 
 The format of the data for each section is described below.
 
