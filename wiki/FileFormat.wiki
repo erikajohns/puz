@@ -267,6 +267,16 @@ In C, for example, if `ltim` were a pointer to the LTIM data section, it could b
 
 == RUSR ==
 
+_The RUSR section is currently undocumented_
+
+= What remains =
+
+This section contains a list of pieces of the format that we haven't yet figured out.  If you have, please let us know!
+
+ * Most importantly, locked puzzles.  What algorithm is used to take a code and unlock a scrambled puzzle?  If it's not too expensive, we could likely compute the correct code from a locked puzzle - since the codes are only 4 digits, just try each one until we get a solution board that has the correct checksum.
+ * The various unknown parts of the header, mentioned at the beginning
+ * The RUSR data section format (though it looks straightforward)
+ 
 
 = Credit =
 Most of this document is by [http://joshisanerd.com Josh Myer], with some
