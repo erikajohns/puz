@@ -226,9 +226,42 @@ The format of the data for each section is described below.
 
 == GRBS ==
 
+The GRBS data is a "board" of one byte per square, similar to the strings for the solution and user state tables except that black squares, letters, etc. are not indicated.  The byte for each square of this board indicates whether or not that square is a rebus.  Possible values are:
+
+ * *0* indicates a non-rebus square.
+ * *1+n* indicates a rebus square, the solution for which is given by the entry with key *n* in the RTBL section.
+
+If a square is a rebus, only the first letter will be given by the solution board and only the first letter of any fill will be given in the user state board.
+
 == RTBL ==
 
+The RTBL data is a string containing the solutions for any rebus squares.  
+
+These solutions are given as an ascii string.  For each rebus there is a number, a colon, a string and a semicolon.  The number (represented by an ascii string) is always two characters long - if it is only one digit, the first character is a space.  It is the key that the GRBS section uses to refer to this entry (it is one less than the number that appears in the corresponding rebus grid squares).  The string is the rebus solution.
+
+For example, in a puzzle which had four rebus squares containing "HEART", "DIAMOND", "CLUB", and "SPADE", the string might be:
+
+{{{
+" 0:HEART; 1:DIAMOND;17:CLUB;23:SPADE;"
+}}}
+
+Note that the keys need not be consecutive numbers, but in official puzzles they always seem to be in ascending order.  An individual key may appear multiple times in the GRBS board if there are multiple rebus squares with the same solution.
+
 == LTIM ==
+
+The LTIM data section stores two pieces of information: how much time the solver has used and whether the timer is running or stopped.  The two pieces are both stored as ascii strings of numbers, separated by a comma.  First comes the number of seconds elapsed, then "0" if the timer is running and "1" if it is stopped.  For example, if the timer were stopped at 42 seconds when the puzzle was saved, the LTIM data section would contain the ascii string:
+
+{{{
+"42,1"
+}}}
+
+In C, for example, if `ltim` were a pointer to the LTIM data section, it could be parsed with:
+
+{{{
+  int elapsed, stopped;
+
+  sscanf((char*)ltim,"%d,%d",&elapsed,&stopped);
+}}}
 
 == GEXT ==
 
