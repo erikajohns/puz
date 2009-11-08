@@ -1,5 +1,7 @@
 ﻿#summary Detailed file format documentation
 
+<wiki:toc max_depth="1" />
+
 = Introduction =
 
 PUZ is a file format commonly used by commercial software for crossword puzzles. There is, to our knowledge, no documentation of the format available online.  This page (and the implementations) is the result of a bit of reverse engineering work.
