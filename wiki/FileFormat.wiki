@@ -36,7 +36,7 @@ below.
 || *Component* || *Offset* || *End* || *Length* || *Type* || *Description* ||
 || Version String(?) || 0x18 || 0x1B || 0x4 || string || e.g. "1.2\0" ||
 || Reserved1C(?) || 0x1C || 0x1D || 0x2 || ? || In many files, this is uninitialized memory ||
-|| Unknown || 0x1E || 0x1F || 0x2 || ? || In all files, this is set to 0x0000(?) ||
+|| Scrambled checksum || 0x1E || 0x1F || 0x2 || short || In scrambled puzzles, a checksum of the real solution (details below).  Otherwise, 0x0000. ||
 || Reserved20(?) || 0x20 || 0x2B || 0xC || ? || In files where Reserved1C is garbage, this is garbage too. ||
 || Width || 0x2C || 0x2C || 0x1 || byte || The width of the board ||
 || Height || 0x2D || 0x2D || 0x1 || byte || The height of the board ||
