@@ -8,7 +8,7 @@ Table of contents:
 
 PUZ is a file format commonly used by commercial software for crossword puzzles. There is, to our knowledge, no documentation of the format available online.  This page (and the implementations) is the result of a bit of reverse engineering work.
 
-As it currently stands, the documentation is not from complete and doesn't support some files. However, it is complete enough to read and write basic crossword puzzles in the format, such that you may interoperate with the common crossword applications.
+The documentation is mostly complete.  Implementations based on this documentation seem to support, for example, all (or the vast majority of) New York Times puzzles.  The few remaining unknown pieces are noted.
 
 We have no real financial interest in this; it was just a fun hack.
 
@@ -36,13 +36,13 @@ below.
 || *Component* || *Offset* || *End* || *Length* || *Type* || *Description* ||
 || Version String(?) || 0x18 || 0x1B || 0x4 || string || e.g. "1.2\0" ||
 || Reserved1C(?) || 0x1C || 0x1D || 0x2 || ? || In many files, this is uninitialized memory ||
-|| Scrambled checksum || 0x1E || 0x1F || 0x2 || short || In scrambled puzzles, a checksum of the real solution (details below).  Otherwise, 0x0000. ||
+|| Scrambled Checksum || 0x1E || 0x1F || 0x2 || short || In scrambled puzzles, a checksum of the real solution (details below).  Otherwise, 0x0000. ||
 || Reserved20(?) || 0x20 || 0x2B || 0xC || ? || In files where Reserved1C is garbage, this is garbage too. ||
 || Width || 0x2C || 0x2C || 0x1 || byte || The width of the board ||
 || Height || 0x2D || 0x2D || 0x1 || byte || The height of the board ||
 || # of Clues || 0x2E || 0x2F || 0x2 || short || The number of clues for this board ||
 || Unknown Bitmask || 0x30 || 0x31 || 0x2 || short || A bitmask. Operations unknown. ||
-|| Scrambled tag || 0x32 || 0x33 || 0x2 || short || 0 for unscrambled puzzles.  Nonzero (often 4) for scrambled puzzles. ||
+|| Scrambled Tag || 0x32 || 0x33 || 0x2 || short || 0 for unscrambled puzzles.  Nonzero (often 4) for scrambled puzzles. ||
 
 == Puzzle Layout and State ==
 Next come the board solution and player state.  (If a player works on a puzzle and then saves their game, the cells they've filled are stored in the state.  Otherwise the state is all blank cells and contains a subset of the information in the solution.)
@@ -205,6 +205,15 @@ file[0x17] = 0x44 ^ ((c_part & 0xFF00) >> 8);
 
 Note that these hex values in ASCII are the string "ICHEATED".
 
+= Locked/Scrambled Puzzles =
+
+The header contains two pieces related to scrambled puzzles.  The short at 0x32 records whether the puzzle is scrambled.  If it is scrambled, the short at 0x1E is a checksum suitable for verifying an attempt at unscrambling.  If the correct solution is laid out as a string in column-major order, omitting black squares, then 0x1E contains 
+cksum_region(string,0x0000).
+
+== Scrambling Algorithm ==
+
+The algorithm used to scramble the puzzles, discovered by Mike Richards, is documented in his comments below.  Eventually, they will be migrated to the main body of the document.
+
 = Extra Sections =
 
 The known extra sections are:
@@ -284,11 +293,11 @@ _The RUSR section is currently undocumented._
 
 = What remains =
 
-This section contains a list of pieces of the format that we haven't yet figured out.  If you have, please let us know!
+This section contains a list of pieces of the format that we haven't yet figured or documented.  If you have, please let us know!
 
- * Most importantly, locked puzzles.  What algorithm is used to take a code and unlock a scrambled puzzle?  If it's not too expensive, we could likely compute the correct code from a locked puzzle - since the codes are only 4 digits, just try each one until we get a solution board that has the correct checksum.
  * The various unknown parts of the header, mentioned at the beginning
- * The RUSR data section format (though it looks straightforward)
+ * The algorithm used for scrambling puzzles is documented in the comments, it still needs to be integrated into the main text.
+ * The RUSR data section format is also described in the comments but not the main text.
  
 
 = Credit =
