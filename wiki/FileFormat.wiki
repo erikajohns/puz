@@ -175,7 +175,7 @@ for(i = 0; i < num_of_clues; i++)
   cksum = cksum_region(clue[i], strlen(clue[i]), cksum);
 
 if (strlen(notes) > 0)
-  cksum = cksum_region(copyright, strlen(notes)+1, cksum);
+  cksum = cksum_region(notes, strlen(notes)+1, cksum);
 }}}
 
 == Masked Checksums ==
