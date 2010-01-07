@@ -161,12 +161,21 @@ The primary board checksum uses the CIB checksum and other data:
 cksum = c_cib;
 cksum = cksum_region(solution, w*h, cksum);
 cksum = cksum_region(grid, w*h, cksum);
-cksum = cksum_region(title, strlen(title)+1, cksum);
-cksum = cksum_region(author, strlen(author)+1, cksum);
-cksum = cksum_region(copyright, strlen(copyright)+1, cksum);
+
+if (strlen(title) > 0)
+  cksum = cksum_region(title, strlen(title)+1, cksum);
+
+if (strlen(author) > 0)
+  cksum = cksum_region(author, strlen(author)+1, cksum);
+
+if (strlen(copyright) > 0)
+  cksum = cksum_region(copyright, strlen(copyright)+1, cksum);
 
 for(i = 0; i < num_of_clues; i++)
   cksum = cksum_region(clue[i], strlen(clue[i]), cksum);
+
+if (strlen(notes) > 0)
+  cksum = cksum_region(copyright, strlen(notes)+1, cksum);
 }}}
 
 == Masked Checksums ==
@@ -182,11 +191,22 @@ To calculate these bytes, we must first calculate four checksums:
     `c_grid = cksum_region(grid, w*h, 0x0000);`
   # A partial board checksum:
 {{{
-c_part = cksum_region(title, strlen(title)+1, 0x0000);
-c_part = cksum_region(author, strlen(author)+1, c_part);
-c_part = cksum_region(copyright, strlen(copyright)+1, c_part);
+c_part = 0x0000;
+
+if (strlen(title) > 0)
+  c_part = cksum_region(title, strlen(title)+1, c_part);
+
+if (strlen(author) > 0)
+  c_part = cksum_region(author, strlen(author)+1, c_part);
+
+if (strlen(copyright) > 0)
+  c_part = cksum_region(copyright, strlen(copyright)+1, c_part);
+
 for (int i = 0; i < n_clues; i++)
   c_part = cksum_region(clue[i], strlen(clue[i]), c_part);
+
+if (strlen(notes) > 0)
+  c_part = cksum_region(notes, strlen(notes)+1, c_part);
 }}}
 
 Once these four checksums are obtained, they're stuffed into the file thusly:
