@@ -81,6 +81,8 @@ These first three example strings would appear in the file as the following, whe
 Theme: .PUZ format\0J. Puz / W. Shortz\0(c) 2007 J. Puz\0
 }}}
 
+In [http://rexwordpuzzle.blogspot.com/2010/02/german-border-river-wed-2-17-10-she.html some] [http://rexwordpuzzle.blogspot.com/2010/02/cousin-of-boubou-thursday-feb-4-2010.html NYT] [http://rexwordpuzzle.blogspot.com/2010/01/like-unfortunate-torero-monday-jan-25.html puzzles], a "Note" has been included in the title instead of using the designated notes field.  In all the examples we've seen, the note has been separated from the title by a space (ASCII 0x20) and begins with the string "NOTE:" or "Note:".  It's not known if this is flagged anywhere else in the file.  It doesn't seem that Across Lite handles these notes - they are just included with the title (which looks ugly).
+
 The "Across" clues come before the "Down" clues.  (comment from Chris Jones: It's a bit misleading to say 'The "Across" clues come before the "Down" clues.'. The clues should be in numerical order, then with "Across" before "Down" for clues with the same number.)
 
 = Clue Assignment =
