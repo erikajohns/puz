@@ -1,3 +1,6 @@
+1.0.0 (March 11, 2010) includes a variety of bug fixes and is thought
+  to be relatively stable, based on use the application hcross.
+
 0.0.2 adds support for various special features, like circles,
   rebuses, timers, etc.  Also various bug fixes.
 
