@@ -392,6 +392,7 @@ unsigned char * puz_notes_set(struct puzzle_t *puz, unsigned char *val) {
   free(puz->notes);
 
   puz->notes = Sstrdup(val);
+  puz->notes_sz = Sstrlen(val);
 
   return puz->notes;
 }
@@ -703,7 +704,7 @@ unsigned char ** puz_rtblstr_set(struct puzzle_t *puz, unsigned char * val) {
     end = Sstrchr(start, ';'); // XXX this is fragile...bad input will hose this
 
     if (NULL == end) {
-      printf("Appear to have run out of rebus table entries: rebuses: %d, i: %d\n",
+      printf("Appear to have run out of rebus table entries: rebuses: %d, i: %d\nPlease report\n",
              puz->rtbl_sz, i);
 
       return NULL; /* XXX cleanup */
@@ -901,11 +902,14 @@ unsigned short puz_locked_cksum_get(struct puzzle_t *puz) {
 }
 
 /**
- * puz_lock_set - set the flags indicating a puzzle's solution is locked
+ * puz_lock_set - set the flags indicating whether a puzzle's solution
+ *    is locked
  *
  * @puz: a pointer to the struct puzzle_t to check (required)
- * @cksum: a unsigned short, the result of calling:
- *     puz_cksum_region(sol, len, 0x0000);
+
+ * @cksum: An unsigned short.  If this is 0, the puzzle is set
+ *   "unlocked". Otherwise, is should be the result of calling:
+ *       puz_cksum_region(sol, len, 0x0000); 
  *   when sol is the correct solution in column-major order with the
  *   black squares removed and len is its length.
  * 
@@ -915,10 +919,269 @@ unsigned short puz_lock_set (struct puzzle_t *puz, unsigned short cksum) {
   if(NULL == puz)
     return -1;
 
-  puz->header.scrambled_tag = 4;
-  puz->header.scrambled_cksum = cksum;
+  if(cksum) {
+    puz->header.scrambled_tag = 4;
+    puz->header.scrambled_cksum = cksum;
+  } else {
+    puz->header.scrambled_tag = 0;
+    puz->header.scrambled_cksum = 0x0000;
+  }
 
   return cksum;
 }
 
 
+/**
+ * unscramble_string - an internal function used by puz_unscramble.
+ * 
+ * Let s be a string and len be its length.  A "scrambled" version
+ * of s looks like:
+ *
+ * [ s[len/2], s[0], s[1 + (len/2)], s[1], s[2 + (len/2)], s[2],  ...]
+ *
+ * This function takes such a scrambled string (inp) and unscrambles
+ * it into another string (out).  inp and out had better have the same
+ * length.
+ * 
+ * return -1 on error and 0 otherwise.
+ * 
+ */
+unsigned short unscramble_string (unsigned char* inp, unsigned char* out) {
+  if(NULL == inp || NULL == out)
+    return -1;
+
+  int len = Sstrlen(inp);
+  int strbreak = len/2;
+  
+  int i;
+  for(i = 0; i < len; i++) {
+    int index;
+    if (0 == i%2) {
+      index = strbreak + i/2;
+    } else {
+      index = i/2;
+    }
+    
+    out[index] = inp[i];
+  }
+  out[len] = 0;
+
+  return 0;
+}
+
+/**
+ * unshift_string - an internal function used by puz_unscramble.
+ * 
+ * Given a string s and an int k, the "shifted" verison of s is created
+ * by moving everything before index k to the end of the string.
+ * 
+ * This takes such a shifted string (inp) and undoes the shifting into
+ * (out).
+ *
+ * return -1 on error and 0 otherwise.
+ */
+unsigned short unshift_string(unsigned char* inp, unsigned int shift,
+                              unsigned char* out) {
+  if(NULL == inp || NULL == out)
+    return -1;
+
+  int len = Sstrlen(inp);
+
+  if (len < shift)
+    return -1;
+
+  Sstrncpy(out + shift, inp, len - shift);
+  Sstrncpy(out, inp + (len - shift), shift);
+
+  out[len] = 0;
+
+  return 0;
+}
+
+/* the scrambling functions use this impossibly unfortunate
+   representation for the board.  We calculate it here.
+
+   NULL on error
+ */
+unsigned char* formatted_solution(struct puzzle_t* puz) {
+  if (puz == NULL)
+    return NULL;
+
+  int w = puz_width_get(puz);
+  int h = puz_height_get(puz);
+  int board_sz = w*h;
+  
+  unsigned char* sol = puz_solution_get(puz);
+
+  int i,size = 0;
+  for(i=0; i < board_sz; i++) {
+    if(sol[i] != '.')
+      size++;
+  }
+
+  unsigned char* out = calloc(size+1, sizeof(unsigned char));
+  int j,index = 0;
+  for(i=0; i < w; i++) {
+    for(j=0; j < h; j++) {
+      if (sol[j*h + i] != '.') {
+        out[index] = sol[j*h + i];
+        index++;
+      }
+    }
+  }
+
+  out[size] = 0;
+  return out;
+}
+
+int unformat_unlocked_sol(struct puzzle_t* puz, unsigned char* formatted) {
+  if (puz == NULL || formatted == NULL)
+    return -1;
+
+  int w = puz_width_get(puz);
+  int h = puz_height_get(puz);
+  int board_sz = w*h;
+  int len = Sstrlen(formatted);
+
+  unsigned char* sol = puz_solution_get(puz);
+
+  int i,j;
+  int index = 0;
+
+  // XXX this could fail if we calculated something poorly (but shouldn't)
+  for(i=0; i < w; i++) {
+    for(j=0; j < h; j++) {
+      if (sol[j*h + i] != '.') {
+        sol[j*h + i] = formatted[index];
+        index++;
+      }
+    }
+  }
+
+  return 0;
+}
+
+/**
+ * puz_unlock_puzzle - unlock a puzzle with a key
+ *
+ * @puz: a pointer to the struct puzzle_t to check (required) 
+ * @code: an unsigned short.  This is the code for unlocking the
+ *   puzzle.  It must be a number between 1111 and 9999 and have no
+ *   0s.
+ * 
+ * On success, returns 0.  Nonzero otherwise.  A few specific error codes:
+ *   1 means the puzzle wasn't scrambled
+ *   2 means the code didn't work
+ */
+int puz_unlock_solution(struct puzzle_t* puz, unsigned short code) {
+
+  if(NULL == puz)
+    return -1;
+
+
+  // make sure the puzzle is actually scrambled
+  if(!(puz->header.scrambled_tag)) {
+    return 1;
+  }
+
+  int digits[4];
+  digits[0] = (code/1000) % 10;
+  digits[1] = (code/100)  % 10;
+  digits[2] = (code/10)   % 10;
+  digits[3] = code        % 10;
+
+  // make sure the code is valid
+  int i;
+  for (i = 0; i < 4; i++) {
+    if(digits[i] == 0)
+      return -2;
+  }
+
+  // first we must calculate the unscrambled solution.  It's possible
+  // the key passed will be wrong and we'll have to fail after we
+  // calculate it.
+  unsigned char* inp = formatted_solution(puz);
+  int len = Sstrlen(inp);
+  unsigned char* workspace1 = calloc(len+1, sizeof(unsigned char));
+  unsigned char* workspace2 = calloc(len+1, sizeof(unsigned char));
+  if (NULL == workspace1 || NULL == workspace2)
+    return -3;
+
+  Sstrncpy(workspace1, inp, len+1);
+
+  int e1, e2, j;
+  for(i = 3; i >= 0; i--) {
+    e1 = unscramble_string(workspace1, workspace2);
+    e2 = unshift_string(workspace2, digits[i], workspace1);
+    if(e1 || e2)
+      return -4;
+   
+    for (j = 0; j < len; j++) {
+      workspace1[j] -= digits[j % 4];
+      if (workspace1[j] < 65)
+        workspace1[j] += 26;
+    }
+  }
+
+  // Now we have to check - did this unscrambling mess actually
+  // produce something with the right checksum?  The stored
+  // checksum is for the solution _without_ black squares, so 
+  // first we create a copy without them in workspace 2.
+  int index = 0;
+  for(j=0; j<len; j++) {
+    if(workspace1[j] != '.') {
+      workspace2[index] = workspace1[j];
+      index++;
+    }
+  }
+  workspace2[j] = 0;
+
+  unsigned short cksum = puz_cksum_region(workspace2, len, 0x0000);
+  if (cksum != puz->header.scrambled_cksum) {
+    return 2;
+  }
+
+  // Awesome, the unscrambled solution has the right checksum, so
+  // it's almost certainly the correct board.  Copy it in as the solution
+  // and fix up all the scrambled markers
+  unformat_unlocked_sol(puz, workspace1);
+  puz_lock_set(puz, 0x0000);
+
+  free(workspace1);
+  free(workspace2);
+  
+  return 0;
+}
+
+
+/**
+ * puz_brute_force_unlock - unscramble a locked puzzle without the key
+ *
+ * @puz: a pointer to the struct puzzle_t to check (required) 
+ *
+ * On success, returns the correct code.  Otherwise, it returns an
+ * integer less than 0.
+ */
+int puz_brute_force_unlock(struct puzzle_t* puz) {
+  // make sure we were given a puzzle that's scrambled
+  if(NULL == puz)
+    return -1;
+  if(!(puz->header.scrambled_tag))
+    return -2;
+
+
+  int code = 1111;
+  int great_success;
+  for (; code++; code < 10000) {
+    great_success = puz_unlock_solution(puz,code);
+    if(!great_success) {
+      break;
+    }
+  }
+
+  if(great_success) {
+    return -3;
+  } else {
+    return code;
+  }
+}
