@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(libpuz, 1.0.0, josh@joshisanerd.com)
-AM_INIT_AUTOMAKE(libpuz, 1.0.0, josh@joshisanerd.com)
+AC_INIT(libpuz, 1.1.0, chris.casinghino@gmail.com)
+AM_INIT_AUTOMAKE(libpuz, 1.1.0, chris.casinghino@gmail.com)
 AC_CONFIG_SRCDIR([include/puz.h])
 AC_CONFIG_HEADER([include/libpuz_config.h])
 
