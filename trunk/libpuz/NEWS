@@ -1,3 +1,11 @@
+1.1.1 (December 17, 2013)
+  - Cleaned up a few warnings
+
+  - Examined reports of a segfault when reading text puzzles.  Fixed
+    the segfault, but it appears this code has never worked correctly
+    (in particular, clues are not assigned the right numbers).  It
+    should not be used.
+
 1.1.0 (July 16, 2010) adds several new features, including:
 
   - Support for rebus entries from the user.

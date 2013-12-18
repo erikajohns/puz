@@ -6,6 +6,11 @@ libpuz is a library for reading and writing files in the binary PUZ
 file format, and reading the textual format.  It is intended for
 programmers to use, not for normal users.
 
+NOTE: This library does not currently handle the text format
+correctly.  It is very handy for the binary format, but reading
+puzzles in the text format currently has at least two bugs (clues
+appear in the wrong order and the notes section is ignored).
+
 This version of libpuz is thought to be quite stable.  It is used as
 the main interface to puz files in the end-user application hcross,
 leading to a variety of bug fixes and additional features.  While some
